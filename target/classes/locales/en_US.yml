@@ -1,0 +1,478 @@
+# ============================================================= #
+#                        DEATH HURRICANE                        #
+# ============================================================= #
+hurricane:
+  death-event:
+    broadcast-message: "#ba0000The soul of #cc0425&l%victim% #ba0000has been dragged into the #ab1a07Infinity Limbo #ba0000by an unknown entity where they will have no other fate but eternal suffering. #cc0425&lHE'S BEEN PERMABANNED!"
+    broadcast-hover: "&c&l☠ Death Details ☠\n&8&l-> &7Cause: &f%cause%\n&8&l-> &7World: &f%world%\n&8&l-> &7Coordinates: &fx:%x% y:%y% z:%z%\n&8&l-> &7Ping: &f%ping%ms\n&8&l-> &7TPS: &f%tps%\n\n&fClick to send coordinates!"
+
+    title: "#990000&k: #d11d41Permadeath! #990000&k:"
+    subtitle: "&f%victim% has died"
+    spectator-title: "&7&o..."
+    spectator-subtitle: "&b&oNow you are a soul"
+    kick-reason: "&8&oYour soul has faded away..."
+    hurricane-start: "#d11d41PermaPiola &8&l>> #c41a36The #ab1a07Death Hurricane #c41a36starts with a duration of 1 hour!"
+    hurricane-end: "#d11d41PermaPiola &8&l>> #93c47dThe #ab1a07Death Hurricane #93c47dhas ended!"
+    hurricane-added: "#d11d41PermaPiola &8&l>> #c41a36¡%time% hour(s) have been added to the #ab1a07Death Hurricane#c41a36!"
+    staff-chat-death: "&4[StaffChat] &f%cause%"
+
+  bossbar:
+    title: "&8☠ &8[&c%time%&8] &7of #ab1a07Death Hurricane &8☠"
+
+  commands:
+    usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /hurricane <enable|disable|edit>"
+    usage-edit: "#d11d41PermaPiola &8&l>> #c41a36Usage: /hurricane edit <add|remove|set> <1h2m3s>"
+    invalid-time-format: "#d11d41PermaPiola &8&l>> #c41a36Invalid time format. Use for example: 1h30m, 45m, or 1h2m3s."
+    cannot-remove-all: "#d11d41PermaPiola &8&l>> #c41a36You cannot remove that much time. The Hurricane must have at least 1 second remaining."
+    enabled: "#d11d41PermaPiola &8&l>> #93c47dThe Death Hurricane has been manually activated!"
+    already-enabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is already active."
+    disabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane has been deactivated!"
+    already-disabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is not active at this time."
+    invalid-number: "#d11d41PermaPiola &8&l>> #c41a36The amount must be a valid integer."
+    invalid-unit: "#d11d41PermaPiola &8&l>> #c41a36Invalid time unit. Use 's', 'm' or 'h'."
+    time-added: "#d11d41PermaPiola &8&l>> #93c47d%time% were added to the Death Hurricane."
+    time-removed: "#d11d41PermaPiola &8&l>> #c41a36%time% were removed from the Death Hurricane."
+    time-set: "#d11d41PermaPiola &8&l>> #ffd966The Death Hurricane time was set to %time%."
+    broadcast-added: "#d11d41PermaPiola &8&l>> #93c47d%player% added %time% to the Death Hurricane."
+    broadcast-removed: "#d11d41PermaPiola &8&l>> #c41a36%player% removed %time% from the Death Hurricane."
+    broadcast-set: "#d11d41PermaPiola &8&l>> #ffd966%player% set the Death Hurricane time to %time%."
+    debug-active: "#d11d41PermaPiola &8&l>> #93c47dDebug: The Hurricane is ACTIVE."
+    debug-inactive: "#d11d41PermaPiola &8&l>> #c41a36Debug: The Hurricane is DEACTIVATED."
+
+# ============================================================= #
+#                        DEMENTIAL WHEEL                        #
+# ============================================================= #
+demential-wheel:
+  event-ended: "#d11d41PermaPiola &8&l>> #93c47dThe event #ffd966%event% #93c47dhas ended."
+  warning: "#d11d41PermaPiola &8&l>> #c41a36A strange event will manifest soon..."
+  spin-3: "#990000Demential Wheel &8&l>> #c41a36Will spin in 3"
+  spin-2: "#990000Demential Wheel &8&l>> #c41a36Will spin in 2"
+  spin-1: "#990000Demential Wheel &8&l>> #c41a36Will spin in 1"
+  death-messages:
+    acid-rain: "%player% died due to acid corrosion"
+  events:
+    totem_drop: "#990000Demential Wheel &8&l>> #c41a36Totem Drop: 10%% chance to consume double totems."
+    putrified_water: "#990000Demential Wheel &8&l>> #c41a36Putrified Water: Touching water gives you Wither 1."
+    acid_rain: "#990000Demential Wheel &8&l>> #c41a36Acid Rain: Acid rain and contaminated water. Avoid getting wet!"
+    life_erosion: "#990000Demential Wheel &8&l>> #c41a36Life Erosion: You permanently lose a heart slot."
+    toxic_air: "#990000Demential Wheel &8&l>> #c41a36Toxic Air: Being above layer 40 prevents your regeneration."
+    broken_gear: "#990000Demential Wheel &8&l>> #c41a36Broken Gear: Your armor and tools wear out 50%% faster."
+
+# ============================================================= #
+#                           PLAYTIME                            #
+# ============================================================= #
+playtime:
+  usage-show: "&cUsage: /pt show <player|team> <name>"
+  usage-admin: "&cUsage: /pt admin <add|remove|set|reset> <player> [time]"
+  usage-admin-add: "&cUsage: /pt admin add <player> <time>\n&7Example: /pt admin add Notch 1h30m"
+  usage-admin-remove: "&cUsage: /pt admin remove <player> <time>\n&7Example: /pt admin remove Notch 1h30m"
+  usage-admin-set: "&cUsage: /pt admin set <player> <time>\n&7Example: /pt admin set Notch 1h30m"
+  usage-admin-reset: "&cUsage: /pt admin reset <player>"
+
+  self: "&cYour Playtime\n&8&l-> &7Playtime: &f%time%"
+  other-player: "&cPlaytime of %player%\n&8&l-> &7Playtime: &f%time%"
+  other-team: "&cPlaytime of Team %team%\n&8&l-> &7Total Playtime: &f%time%"
+  team-not-found: "&cThe specified team does not exist!"
+  team-member-format: "&8&l-> &7%player%: &f%time%"
+
+  top-header: "&7Leaderboard (Players)"
+  top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%time%"
+
+  topteams-header: "&7Leaderboard (Teams)"
+  topteams-format: "&8&l-> &c#%pos%&c. &7%team% &8- &f%time%"
+
+  admin-invalid-time: "&cError\n&8&l-> &7Invalid time format. Use: 1w, 1d, 5h, 30m, or 1d5h30m"
+
+  admin-add-sender: "&7Edited the playtime of &c%player%\n&8&l-> &7Added: &f+%amount%\n&8&l-> &7Playtime: &f%time%"
+  admin-remove-sender: "&7Edited the playtime of &c%player%\n&8&l-> &7Removed: &f-%amount%\n&8&l-> &7Playtime: &f%time%"
+  admin-set-sender: "&7Edited the playtime of &c%player%\n&8&l-> &7Set to: &f%time%"
+  admin-reset-sender: "&7Edited the playtime of &c%player%\n&8&l-> &7Reset: &f%time%"
+
+  admin-add-target: "&7Your playtime was edited\n&8&l-> &7Added: &f+%amount%\n&8&l-> &7Playtime: &f%time%\n&8&l-> &7Editor: &f%admin%"
+  admin-remove-target: "&7Your playtime was edited\n&8&l-> &7Removed: &f-%amount%\n&8&l-> &7Playtime: &f%time%\n&8&l-> &7Editor: &f%admin%"
+  admin-set-target: "&7Your playtime was edited\n&8&l-> &7Set to: &f%time%\n&8&l-> &7Editor: &f%admin%"
+  admin-reset-target: "&7Your playtime was edited\n&8&l-> &7Reset: &f%time%\n&8&l-> &7Editor: &f%admin%"
+
+  units:
+    week: "w"
+    day: "d"
+    hour: "h"
+    minute: "m"
+    second: "s"
+
+# ============================================================= #
+#                            EQUIPOS                            #
+# ============================================================= #
+teams:
+  already-in-team: "#ed2d2dYou are already in a team!"
+  not-in-team: "#ed2d2dYou are not in a team!"
+  team-full: "#ed2d2dYour team is full! (Maximum %size% players)"
+  system-disabled: "#ed2d2dThis system is currently deactivated."
+  only-players: "#ed2d2dOnly players can use this command."
+
+  help:
+    user:
+      - "&f      &eTEAM HELP PAGE&f      "
+      - "&c /team create <name> &f- &rCreate a team!"
+      - "&c /team invite <player> &f- &rInvite a player!"
+      - "&c /team accept <player> &f- &rAccept an invitation"
+      - "&c /team leave &f- &rLeave your current team"
+      - "&c /team memberlist &f- &rShow your team members"
+      - "&c /team glow [on|off] &f- &rToggle team glow"
+    staff:
+      - "&f      &eTEAM HELP STAFF PAGE&f      "
+      - "&c /team system <on/off> &f- &rActivate or deactivate the system"
+      - "&c /team reset &f- &rReset all teams"
+      - "&c /team fire <on/off> &f- &rToggle friendly fire"
+      - "&c /team size <number> &f- &rSet the player limit"
+      - "&c /team forcejoin <team> [player] &f- &rForce join"
+      - "&c /team forceleave [player] &f- &rForce leave a player"
+      - "&c /team list &f- &rShow all teams"
+      - "&c /team spy &f- &rToggle spy mode"
+
+  create:
+    specify-name: "#ed2d2dYou must specify a name!\n&eUsage: /team create <name>"
+    name-taken: "#ed2d2dThat team name is already in use!"
+    name-too-long: "#ed2d2dThe name cannot be longer than 16 characters!"
+    name-too-long-default: "#ed2d2dYour rank does not allow teams longer than 8 characters!"
+    restricted-colors: "#ed2d2dYou cannot use the color \\&4 or special formatting in the name."
+    invalid-chars: "#ed2d2dThe team name can only contain letters, numbers, and underscores."
+    no-hex-colors: "#ed2d2dYou cannot use hexadecimal colors (#) in the team name."
+    success: "#18f523You have created the team #f2cc24%team%&a."
+
+  leave:
+    success: "#ed2d2dYou have left the team."
+    broadcast: "%player_prefix%%player%%player_suffix% #ed2d2dleft the team."
+    disbanded: "#ed2d2dYour team has been disbanded because the leader left."
+
+  glow:
+    disabled-dependency: "&cThe team vision command is temporarily disabled on the server."
+    usage: "#ed2d2dIncorrect usage!\n&eUsage: /team glow [on|off]"
+    toggled-on: "#18f523Team vision activated!"
+    toggled-off: "#ed2d2dTeam vision deactivated."
+    already-on: "#ed2d2dYour team vision is already activated."
+    already-off: "#ed2d2dYour team vision is already deactivated."
+
+  invite:
+    specify-player: "#ed2d2dIncorrect usage!\n&eUsage: /team invite <player>"
+    cant-invite-self: "#ed2d2dYou cannot invite yourself!"
+    target-already-in-team: "#ed2d2dThat player is already in a team!"
+    already-invited: "#ed2d2dYou have already invited this player!"
+    already-in-your-team: "#ed2d2d%target% is already in the team"
+    sent: "#18f523You have invited %target_prefix%%target%%target_suffix% &ato your team."
+    received: "#f2cc24%player_prefix%%player%%player_suffix% #f2cc24has invited you to join their team!\n&eYou have #ed2d2d60 #f2cc24seconds to accept. &6Click here to join!"
+    hover: "#f2cc24Click to execute\n&f/team accept %player%"
+    expired-sender: "#ed2d2dThe invitation for %target_prefix%%target%%target_suffix% #ed2d2dhas expired."
+    expired-target: "#ed2d2dThe invitation from %player_prefix%%player%%player_suffix% #ed2d2dhas expired."
+
+  accept:
+    no-invite: "#ed2d2dYou do not have a pending invitation from that player!"
+    success: "#18f523You have joined the team of %player_prefix%%player%%player_suffix%#18f523!"
+    broadcast: "#f2cc24%new_member_prefix%%new_member%%new_member_suffix% #f2cc24has joined the team!"
+
+  memberlist:
+    team-name: "#f2cc24Team name: &f%team%"
+    leader: "#f2cc24Team leader: %leader_info%"
+    members-prefix: "#f2cc24Members: "
+    members-separator: "&f, "
+    player-format: "%player_prefix%%player%%player_suffix% %status%"
+    icons:
+      online: "&a●"
+      offline: "&c●"
+      dead: "&c☠"
+
+  staff:
+    player-not-found: "#ed2d2dThe specified player does not exist or is not online."
+    team-not-found: "#ed2d2dThe specified team does not exist!"
+
+    system-status: "#f2cc24The team system has been changed to: %status%"
+    system-on: "#18f523ACTIVATED"
+    system-off: "#ed2d2dDEACTIVATED"
+    system-already-on: "#ed2d2dThe team system is already activated."
+    system-already-off: "#ed2d2dThe team system is already deactivated."
+    usage-system: "#ed2d2dIncorrect usage! Define if you want to activate or deactivate the system.\n#f2cc24Usage: /team system <on|off>\n&7Example: /team system off"
+
+    reset-start: "#f2cc24Starting global team reset..."
+    reset-complete: "#18f523All teams have been successfully cleared!"
+
+    fire-status: "#f2cc24Friendly fire has been changed to: %status%"
+    fire-already-on: "#ed2d2dFriendly fire is already activated."
+    fire-already-off: "#ed2d2dFriendly fire is already deactivated."
+    usage-fire: "#ed2d2dIncorrect usage! Define if you want to activate or deactivate friendly fire.\n#f2cc24Usage: /team fire <on|off>\n&7Example: /team fire on"
+
+    size-status: "#f2cc24The member limit per team is now: &a%size%"
+    size-already-same: "#ed2d2dThe member limit is already configured to &a%size%#ed2d2d."
+    usage-size: "#ed2d2dIncorrect usage! You must provide a valid number.\n#f2cc24Usage: /team size <number>\n&7Example: /team size 5"
+
+    usage-forcejoin: "#ed2d2dIncorrect usage! You must specify a team and optionally a player.\n#f2cc24Usage: /team forcejoin <team> [player]\n&7Example: /team forcejoin PiolaTeam Misenba"
+    forcejoin-success: "#18f523You have forced %player_prefix%%player%%player_suffix% #18f523to join the team %team%#18f523."
+    forcejoin-target: "#f2cc24An administrator has forced you to join the team %team%#f2cc24."
+    forcejoin-broadcast: "#f2cc24An administrator has forced the entry of %player_prefix%%player%%player_suffix% #f2cc24into the team."
+    forcejoin-self-already-same: "#ed2d2dYou are already in that team."
+    forcejoin-other-already-same: "%player_prefix%%player% #ed2d2dis already in that team."
+    forcejoin-other-already-different: "%player_prefix%%player% #ed2d2dis already in the team #f2cc24%current_team%#ed2d2d."
+
+    usage-forceleave: "#ed2d2dIncorrect usage! Define who you want to kick.\n#f2cc24 Usage: /team forceleave [player]\n&7Example: /team forceleave Notch"
+    forceleave-success: "#ed2d2dYou have forced %player_prefix%%player%%player_suffix% #ed2d2dto leave their team."
+    forceleave-target: "#ed2d2dAn administrator has forced you to leave your team."
+    forceleave-self: "#ed2d2dYou forced yourself to leave your team."
+    forceleave-broadcast: "#f2cc24An administrator has removed %player_prefix%%player%%player_suffix% #f2cc24from the team."
+    forceleave-disbanded: "#ed2d2dAn administrator has forced the leader out. The team has been disbanded."
+    forceleave-other-no-team: "%player_prefix%%player% #ed2d2dis not in any team."
+
+    spy-toggled-on: "#18f523You have activated Spy mode."
+    spy-toggled-off: "#ed2d2dYou have deactivated Spy mode."
+    spy-format: "&8[#ed2d2dSPY&8] &8[&b%team_name%&8] %player_prefix%%player%%player_suffix%&f: %message%"
+
+    lists-header: "    &3&lTeam List &7(Page %page%/%max_page%)"
+    lists-team-format: "#f2cc24%index%. &f%team_name%"
+    lists-leader: "  &bLeader: %leader%"
+    lists-members-prefix: "  &3Members: "
+    lists-separator: "&f, "
+    lists-btn-prev: "#ed2d2d[< Previous]"
+    lists-btn-next: "#18f523[Next >]"
+    invalid-page: "#ed2d2dInvalid page! There are %max_page% pages."
+    no-teams: "#ed2d2dThere are no teams created."
+
+# ============================================================= #
+#                             TÓTEMS                            #
+# ============================================================= #
+totems:
+  usage-show: "#ed2d2dUsage: /totem show <player|team> <name>"
+  usage-sound: "#ed2d2dUsage: /totem sound <mode|type> <value>"
+  usage-admin: "#ed2d2dUsage: /totem admin <add|remove|set|reset> <player> [amount]"
+  usage-admin-add: "#ed2d2dUsage: /totem admin add <player> <amount>\n&7Example: /totem admin add Notch 5"
+  usage-admin-remove: "#ed2d2dUsage: /totem admin remove <player> <amount>\n&7Example: /totem admin remove Notch 2"
+  usage-admin-set: "#ed2d2dUsage: /totem admin set <player> <amount>\n&7Example: /totem admin set Notch 10"
+  usage-admin-reset: "#ed2d2dUsage: /totem admin reset <player>"
+
+  self: "#ed2d2dTotems used by you\n&8&l-> &7Totems used: &f%totems%"
+  other-player: "#ed2d2dTotems used by %player%\n&8&l-> &7Totems used: &f%totems%"
+  other-team: "#ed2d2dTotems of team %team%\n&8&l-> &7Total totems: &f%totems%"
+  team-not-found: "#ed2d2dThe specified team does not exist!"
+  team-member-format: "&8&l-> &7%player%: &f%totems%"
+
+  top-header: "&7Leaderboard (Players)"
+  top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%totems%"
+
+  topteams-header: "&7Leaderboard (Teams)"
+  topteams-format: "&8&l-> &c#%pos%&c. &7%team% &8- &f%totems%"
+
+  sound-mode-success: "#18f523Sound preference changed to: #f2cc24%mode%"
+  sound-type-success: "#18f523Totem sound changed to: #f2cc24%type%"
+  sound-type-noperm: "#ed2d2dThis totem sound is exclusive for donors!"
+  sound-invalid-mode: "#ed2d2dValid mode options: all, team, off"
+  sound-invalid-type: "#ed2d2dInvalid sound. Use TAB to see the list."
+
+  admin-invalid-number: "#ed2d2dError\n&8&l-> &7Invalid format. You must enter a number."
+
+  admin-add-sender: "&7The used totems of #ed2d2d%player% have been edited\n&8&l-> &7Added: &f+%amount%\n&8&l-> &7Totem: &f%totems%"
+  admin-remove-sender: "&7The used totems of #ed2d2d%player% have been edited\n&8&l-> &7Removed: &f-%amount%\n&8&l-> &7Totem: &f%totems%"
+  admin-set-sender: "&7The used totems of #ed2d2d%player% have been edited\n&8&l-> &7Set to: &f%totems%"
+  admin-reset-sender: "&7The used totems of #ed2d2d%player% have been edited\n&8&l-> &7Reset: &f%totems%"
+
+  admin-add-target: "&7Your totems were edited\n&8&l-> &7Added: &f+%amount%\n&8&l-> &7Totem: &f%totems%\n&8&l-> &7Editor: &f%admin%"
+  admin-remove-target: "&7Your totems were edited\n&8&l-> &7Removed: &f-%amount%\n&8&l-> &7Totem: &f%totems%\n&8&l-> &7Editor: &f%admin%"
+  admin-set-target: "&7Your totems were edited\n&8&l-> &7Set to: &f%totems%\n&8&l-> &7Editor: &f%admin%"
+  admin-reset-target: "&7Your totems were edited\n&8&l-> &7Reset: &f%totems%\n&8&l-> &7Editor: &f%admin%"
+
+  broadcast: "&4❰❰ &8Player &4%player% &8used a totem &4❱❱"
+  broadcast-double: "&4❰❰ &8Player &4%player% &8used two totems &4❱❱"
+  hover-details: "&8&l-> &7Coordinates: &fx:%x% y:%y% z:%z%\n&8&l-> &7World: &f%world%\n&8&l-> &7Remaining Tótems: &f%left%\n&8&l-> &7Last Damage: &f%damage%"
+  causes:
+    contact: "Contact"
+    entity_attack: "Attack"
+    entity_sweep_attack: "Sweep Attack"
+    projectile: "Projectile"
+    suffocation: "Suffocation"
+    fall: "Fall"
+    fire: "Fire"
+    fire_tick: "Fire Tick"
+    melting: "Melting"
+    lava: "Lava"
+    drowning: "Drowning"
+    block_explosion: "Explosion"
+    entity_explosion: "Explosion"
+    void: "Void"
+    lightning: "Lightning"
+    suicide: "Suicide"
+    starvation: "Starvation"
+    poison: "Poison"
+    magic: "Magic"
+    wither: "Wither"
+    falling_block: "Falling Block"
+    thorns: "Thorns"
+    dragon_breath: "Dragon's Breath"
+    custom: "Unknown Damage"
+    fly_into_wall: "Kinetic Energy"
+    hot_floor: "Magma Block"
+    cramming: "Cramming"
+    dryout: "Dryout"
+    freeze: "Freeze"
+    sonic_boom: "Sonic Boom"
+    world_border: "World Border"
+    campfire: "Campfire"
+
+# ============================================================= #
+#                            UTILIDAD                           #
+# ============================================================= #
+join:
+  donator: "%player_prefix%%player%%player_suffix% &ejoined the game"
+  default: "&7%player% &ejoined the game"
+quit:
+  donator: "%player_prefix%%player%%player_suffix% &eleft the game"
+  default: "&7%player% &eleft the game"
+
+private:
+  format-to:
+    donator: "&dTo %target_prefix%%target%%target_suffix%&7: &f%message%"
+    default: "&dTo %target_prefix%%target%%target_suffix%&7: &7%message%"
+  format-from:
+    donator: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: &f%message%"
+    default: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: &7%message%"
+
+scoreboard:
+  title: "&4☠ #ed2d2d&lPermaPiola 2 T6 &4☠"
+  teammate-format: "   %arrow% &f%player% &c%hp%❤ %ping_color%%ping%ms"
+  event-header: "#ed2d2d❖ &fDemential Wheel:"
+  event-format-double: "   %event1% - %event2%"
+  event-format-single: "   %event%"
+  no-team: ""
+  lines:
+    - "&8&m--------------------------"
+    - "#ed2d2d❖ &fDay: &c%day%"
+    - "#ed2d2d❖ &fRank: %rank%"
+    - "#ed2d2d❖ &fTeam: &c%team%"
+    - "%teammates_section%"
+    - "%demential_events%"
+    - "#ed2d2d❖ &fTPS: &f%tps%"
+    - "&8&m--------------------------"
+
+alerts:
+  mining:
+    message: "#ed2d2d[Alert] &f%player% &7mined &b%block% &7at &e%coords%"
+    hover: "#f2cc24Click to teleport to %player%"
+
+combatlog:
+  staff:
+    header: "&8[&4❌&8] #eb3c2d¡<##7e0810>%player% #eb3c2dtried to combatlog! &8&l| #b30024>Health: #f30611%health% 💔"
+    mobs: "&8[&4❌&8] #b30024Mobs around: #f30611%n%"
+    last-damage: "&8[&4❌&8] #b30024Last Damage: #f30611%cause%"
+    reason: "&8[&4❌&8] #b30024Leave reason: #f30611%reason%"
+    ping: "&8[&4❌&8] #b30024Ping: #f30611%ping%ms"
+
+inactivity:
+  death-message: "%player% died from inactivity"
+
+commands:
+  generic:
+    line: "&3&m-----------------------------------------------------"
+    unknown-command-line1: "&cUnknown or incomplete command. See below for error\n"
+    unknown-command-pointer: "&c&o<--[HERE]"
+    console-only: "#ed2d2dThis command can only be executed by players."
+    no-permission: "#ed2d2dYou do not have permission to execute this command."
+    player-offline: "#ed2d2dThat player is offline or does not exist!"
+
+  emotes:
+    gui-title: "&8Emotes List"
+    item-name: "#f2cc24%trigger%"
+    lore-result: "&7Result: %emote%"
+    lore-has-access: "#18f523You have access to this emote!"
+    lore-no-access: "#ed2d2dRequires Donor rank."
+
+  echest:
+    gui-title: "&8Ender chest of %player%"
+    gui-title-self: "&8Ender chest"
+
+  rename:
+    usage: "#ed2d2dUsage: /rename <new_name>"
+    no-item: "#ed2d2dYou must hold an item in your hand to rename it!"
+
+  revive:
+    usage: "#ed2d2dUsage: /revive <player>"
+    not-dead: "#ed2d2dThat player is not dead."
+    success: "#18f523You have successfully revived %player%."
+    staff-alert: "&8[&aRevive&8] &fAdministrator %admin% &7has revived &f%player%&7."
+
+  teamchat:
+    usage: "#ed2d2dUsage: /tc <message>"
+
+  staffchat:
+    usage: "#ed2d2dUsage: /staffchat <message>"
+
+  scoreboard:
+    enabled: "#18f523Scoreboard activated!"
+    disabled: "#ed2d2dScoreboard deactivated."
+
+  gamemode:
+    usage-1: "#ed2d2dUsage: /gm <number>"
+    usage-2: "#ed2d2dValid numbers: 0, 1, 2, 3"
+    invalid-number: "#ed2d2dInvalid number. Valid numbers: 0, 1, 2, 3"
+    self: "Game mode changed to %mode%"
+    other-sender: "The game mode of %player% changed to %mode%"
+    other-target: "Game mode changed to %mode%"
+    names:
+      survival: "Survival"
+      creative: "Creative"
+      adventure: "Adventure"
+      spectator: "Spectator"
+
+  broadcast:
+    usage: "#ed2d2dUsage: /broadcast <message>"
+    format: "&4&lBroadcast &8|&e %message%"
+
+  chat:
+    usage: "#ed2d2dUsage: /chat <all|team|staff>"
+    invalid-channel: "#ed2d2dInvalid channel. Valid channels: all, team, staff"
+    already-in-channel: "#ed2d2dYou are already in this chat channel."
+    no-team: "#ed2d2dYou do not belong to any team."
+    changed-all: "#18f523You switched to Global chat."
+    changed-staff: "#18f523You switched to Staff chat."
+    changed-team: "#18f523You switched to your Team chat."
+
+  playerip:
+    usage: "#ed2d2dUsage: /playerip <player>"
+    success: "#18f523IP of %player%: &e%ip%"
+    error: "#ed2d2dCould not retrieve the player's IP address."
+
+  permapiola:
+    usage: "#ed2d2dUsage: /permapiola reload [file]"
+    invalid-file: "#ed2d2dUnrecognized file. Use TAB to see available files."
+    reload-all: "#18f523[PermaPiola] All files have been successfully reloaded!"
+    reload-file: "#18f523[PermaPiola] The file &e%file% #18f523has been successfully reloaded!"
+
+  inventory:
+    usage: "#ed2d2dUsage: /inv <argument> [player]\n#ed2d2dValid arguments: see, death"
+    invalid-argument: "#ed2d2dInvalid argument. Valid arguments: see, death"
+    see-self: "#ed2d2dYou cannot open your own inventory with this command."
+    gui-title: "Inventory of %player%"
+    give-no-inventory: "#ed2d2dThat player does not have a saved inventory."
+    death-not-dead: "#ed2d2dThat player is not dead. Use 'see' instead."
+    death-locked: "#ed2d2dCareful! Another administrator is already editing this player's grave."
+    death-saved: "#18f523Grave changes have been successfully saved!"
+    death-gui-title: "&8Grave of %player%"
+
+  helpop:
+    usage: "#ed2d2dUsage: /helpop <message>"
+    cooldown: "#ed2d2dWait %time% seconds before using this command again."
+    format: "#ed2d2d[HelpOp] %player_format%&f: %message%"
+
+  msg:
+    usage: "#ed2d2dUsage: /msg <player> <message>"
+
+  reply:
+    usage: "#ed2d2dUsage: /reply <message>"
+    no-target: "#ed2d2dYou have no one to reply to."
+
+  dementialwheel:
+    no-permission: "#c41a36You do not have permission to execute this command."
+    usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /dementialwheel <enable|disable> [event]"
+    disabled-all: "#d11d41PermaPiola &8&l>> #c41a36All Demential Wheel events have been deactivated."
+    enabled-all-events: "#d11d41PermaPiola &8&l>> #93c47dALL Demential Wheel events have been activated!"
+    force-enabled: "#d11d41PermaPiola &8&l>> #a4c2f4Event forcefully activated on event: #ffd966%event%"
+    invalid-event: "#d11d41PermaPiola &8&l>> #c41a36Invalid event. Use autocomplete to see available events."
+    already-active: "#d11d41PermaPiola &8&l>> #c41a36That event is already active."
+    all-events-already-active: "#d11d41PermaPiola &8&l>> #c41a36All events are already activated!"
+    no-events-active: "#d11d41PermaPiola &8&l>> #c41a36There is no active event on the Demential Wheel."
+    event-not-active: "#d11d41PermaPiola &8&l>> #c41a36That event is not currently active."
+    force-disabled: "#d11d41PermaPiola &8&l>> #c41a36The event has been deactivated: #ffd966%event%"

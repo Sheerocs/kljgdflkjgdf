@@ -1,0 +1,61 @@
+emotes:
+  heart:
+    trigger: "<3"
+    emote: "❤"
+  star:
+    trigger: ":star:"
+    emote: "✮"
+  yes:
+    trigger: ":yes:"
+    emote: "✔"
+  no:
+    trigger: ":no:"
+    emote: "✖"
+  java:
+    trigger: ":java:"
+    emote: "☕"
+  cat:
+    trigger: ":cat:"
+    emote: "= ＾● ⋏ ●＾ ="
+  typing:
+    trigger: ":typing:"
+    emote: "✎..."
+  shrug:
+    trigger: ":shrug:"
+    emote: "¯\\_(ツ)_/¯"
+  tableflip:
+    trigger: ":tableflip:"
+    emote: "(╯°□°）╯︵ ┻━┻"
+  oof:
+    trigger: ":oof:"
+    emote: "&c&lOOF"
+  skull:
+    trigger: ":skull:"
+    emote: "☠"
+  fire:
+    trigger: ":fire:"
+    emote: "🔥"
+  magic:
+    trigger: ":magic:"
+    emote: "✨"
+  nuke:
+    trigger: ":nuke:"
+    emote: "☢"
+  toxic:
+    trigger: ":toxic:"
+    emote: "☣"
+  crown:
+    trigger: ":crown:"
+    emote: "♛"
+  music:
+    trigger: ":music:"
+    emote: "♫"
+  swords:
+    trigger: ":swords:"
+    emote: "⚔"
+  warning:
+    trigger: ":warn:"
+    emote: "⚠"
+  heartbreak:
+    trigger: "</3"
+    emote: "💔"

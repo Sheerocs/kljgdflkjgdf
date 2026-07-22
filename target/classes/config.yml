@@ -1,0 +1,173 @@
+# ============================================================= #
+#                CONFIGURACIÓN GLOBAL PERMAPIOLA                #
+# ============================================================= #
+
+settings:
+  # Opciones: "es_ES" o "en_US"
+  default-language: "es_ES"
+
+system:
+  start-date: "2026-04-27T21:10:00"
+
+inactivity:
+  # Formatos aceptados: w (semanas), d (días), h (horas), m (minutos), s (segundos)
+  # Ejemplo: "48h" (48 horas), "2d" (2 días)
+  max-offline-time: "2s"
+  required-playtime: "1m"
+  grace-period: "1m"
+
+discord:
+  enabled: true
+  channel-name: "muertes"
+  death-embed:
+    title: "¡%victim% ha sido permabaneado!"
+    color: "#cc0425"
+    day-and-death: "**Día: %day% | Muerte: %death_number%**"
+    cause-title: "Causa de Muerte"
+    location-title: "Ubicación"
+    location-format: "Coordenadas: %x% %y% %z%\nMundo: %world%"
+    footer: "TPS: %tps% | Ping: %ping%ms • %date%"
+
+    # Traducción de los mundos de Minecraft para que se vean bien en Discord
+    worlds:
+      "world": "Over"
+      "world_nether": "Nether"
+      "world_the_end": "End"
+      "world_permapiola_fallen_memories": "Fallen Memories"
+
+# ============================================================= #
+#                           HURRICANE                           #
+# ============================================================= #
+
+hurricane:
+  duration-hours: 1
+  head-name: "&c&l%victim%"
+  head-lore:
+    - "&c&lHA SIDO PERMABANEADO"
+    - ""
+    - "&7Fecha del Baneo: &c%date%"
+    - "&7Hora del Baneo: &c%time%"
+    - "&7Causa de Muerte: %cause%"
+
+# ============================================================= #
+#                        DEMENTIAL WHEEL                        #
+# ============================================================= #
+demential-wheel:
+  settings:
+    extra-spin-chance-overworld: 0.50
+    extra-spin-chance-other: 1.0
+    totem-drop:
+      chance: 0.10
+    putrified-water:
+      wither-duration-ticks: 40
+      wither-amplifier: 0
+    acid-rain:
+      damage: 1.0
+    life-erosion:
+      hearts-to-remove: 1.0
+    toxic-air:
+      y-layer: 40
+    broken-gear:
+      extra-damage-percentage: 0.50
+
+# ============================================================= #
+#                           EQUIPOS                             #
+# ============================================================= #
+teams:
+  enabled: true
+  friendly-fire: false
+  max-size: 5
+
+# ============================================================= #
+#                           PLAYTIME                            #
+# ============================================================= #
+playtime:
+  afk-timeout-minutes: 1
+
+# ============================================================= #
+#                           UTILIDAD                            #
+# ============================================================= #
+command-blocker:
+  default-commands:
+    - "playtime"
+    - "pt"
+    - "team"
+    - "t"
+    - "teamchat"
+    - "tc"
+    - "totem"
+    - "chat"
+    - "helpop"
+    - "msg"
+    - "tell"
+    - "whisper"
+    - "w"
+    - "reply"
+    - "r"
+    - "togglesb"
+  donor-commands:
+    - "emotes"
+    - "rename"
+    - "rn"
+  staff-commands:
+    - "broadcast"
+    - "bc"
+    - "enderchest"
+    - "echest"
+    - "ec"
+    - "gm"
+    - "gma"
+    - "gmc"
+    - "gms"
+    - "gmsp"
+    - "inventory"
+    - "inv"
+    - "playerip"
+    - "getip"
+    - "permapiola"
+    - "revive"
+    - "staffchat"
+    - "sc"
+    - "hurricane"
+    - "dementialwheel"
+
+server-list:
+  hide-players: true
+
+chat:
+  global-format:
+    donator: "%player_prefix%%player%%player_suffix%&f: %message%"
+    default: "%player_prefix%%player%%player_suffix%&7: %message%"
+  spec-format:
+    default: "&8[&7Spec&8] %player_prefix%%player%&7: %message%"
+    donator: "&8[&7Spec&8] %player_prefix%%player%&7: &f%message%"
+  team-format: "&8[&bTeamChat&8] %player_prefix%%player%%player_suffix%&f: %message%"
+  staff-format: "&4[StaffChat] &f%player_prefix%%player%&f: %message%"
+  override:
+    enabled: true
+    symbol: "!"
+
+spawn:
+  first-join:
+    enabled: true
+    world: "world"
+    x: 0.5
+    y: 70.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+alerts:
+  mining:
+    enabled: true
+    blocks:
+      - DIAMOND_ORE
+      - DEEPSLATE_DIAMOND_ORE
+      - ANCIENT_DEBRIS
+
+helpop:
+  cooldown-seconds: 1
+
+combatlog:
+  duration-seconds: 15
+  detection-radius: 8
