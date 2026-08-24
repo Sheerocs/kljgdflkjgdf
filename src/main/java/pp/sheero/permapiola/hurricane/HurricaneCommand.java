@@ -1,207 +1,256 @@
 package pp.sheero.permapiola.hurricane;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-public class HurricaneCommand implements CommandExecutor, TabCompleter {
+public class HurricaneCommand {
 
-    private final PermaPiola plugin;
-    private final LanguageManager lang;
+    public static void register(Commands commands, HurricaneManager hurricaneManager, LanguageManager lang) {
 
-    private static final Pattern TIME_PATTERN = Pattern.compile("(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?");
+        var hurricaneNode = Commands.literal("hurricane")
+                .requires(source -> source.getSender().hasPermission("permapiola.admin.hurricane"))
 
-    private static final List<String> SUB_COMMANDS = Arrays.asList("debug", "enable", "disable", "edit");
-    private static final List<String> EDIT_ACTIONS = Arrays.asList("add", "remove", "set");
-    private static final List<String> TIME_SUGGESTIONS = Arrays.asList("1h30m", "45m", "10s", "1h2m3s");
+                // ==========================================
+                // SUBCOMANDO: START
+                // ==========================================
+                .then(Commands.literal("start")
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
 
-    public HurricaneCommand(PermaPiola plugin, LanguageManager lang) {
-        this.plugin = plugin;
-        this.lang = lang;
+                            if (hurricaneManager.isActive()) {
+                                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.already-active")));
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            hurricaneManager.addHurricaneTime();
+
+                            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.start")));
+
+                            long addedSeconds = hurricaneManager.getDurationSecondsCache();
+
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                String formattedDur = hurricaneManager.getFormattedDuration(addedSeconds, p);
+                                String broadcastRaw = lang.getMsg(p, "hurricane.death-event.hurricane-start").replace("%duration%", formattedDur);
+                                p.sendMessage(ColorUtils.format(broadcastRaw));
+                            }
+
+                            String cFormat = hurricaneManager.getFormattedDuration(addedSeconds, Bukkit.getConsoleSender());
+                            String consoleRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.hurricane-start").replace("%duration%", cFormat);
+                            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleRaw));
+
+                            String alert = lang.getMsg(sender, "hurricane.staff-alert-start")
+                                    .replace("%admin%", sender.getName());
+                            notifyStaff(alert, sender);
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                )
+
+                // ==========================================
+                // SUBCOMANDO: STOP
+                // ==========================================
+                .then(Commands.literal("stop")
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
+
+                            if (!hurricaneManager.isActive()) {
+                                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.not-active")));
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            hurricaneManager.stopHurricane();
+
+                            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.stop")));
+
+                            String alert = lang.getMsg(sender, "hurricane.staff-alert-stop")
+                                    .replace("%admin%", sender.getName());
+                            notifyStaff(alert, sender);
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                )
+
+                // ==========================================
+                // SUBCOMANDO: SET (Modifica el config.yml global)
+                // ==========================================
+                .then(Commands.literal("set")
+                        .then(Commands.argument("tiempo", StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    handleTimeSuggestions(builder);
+                                    return builder.buildFuture();
+                                })
+                                .executes(context -> {
+                                    CommandSender sender = context.getSource().getSender();
+                                    String rawTime = StringArgumentType.getString(context, "tiempo").toLowerCase();
+
+                                    try {
+                                        int seconds = parseTimeFormat(rawTime);
+
+                                        // Validación anti-spam
+                                        if (seconds == hurricaneManager.getDurationSecondsCache()) {
+                                            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.duration-already-set")));
+                                            return Command.SINGLE_SUCCESS;
+                                        }
+
+                                        hurricaneManager.setDefaultDuration(rawTime, seconds);
+
+                                        String msg = lang.getMsg(sender, "hurricane.duration-set").replace("%time%", rawTime);
+                                        sender.sendMessage(ColorUtils.format(msg));
+
+                                        String alert = lang.getMsg(sender, "hurricane.staff-alert-duration")
+                                                .replace("%admin%", sender.getName())
+                                                .replace("%time%", rawTime);
+                                        notifyStaff(alert, sender);
+
+                                    } catch (IllegalArgumentException e) {
+                                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.invalid-time")));
+                                    }
+
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                )
+
+                // ==========================================
+                // SUBCOMANDO: TIME (Agrupa add y remove)
+                // ==========================================
+                .then(Commands.literal("time")
+
+                        // ADD
+                        .then(Commands.literal("add")
+                                .then(Commands.argument("tiempo", StringArgumentType.word())
+                                        .suggests((context, builder) -> {
+                                            handleTimeSuggestions(builder);
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> handleTimeAction(context, hurricaneManager, lang, "add"))
+                                )
+                        )
+
+                        // REMOVE
+                        .then(Commands.literal("remove")
+                                .then(Commands.argument("tiempo", StringArgumentType.word())
+                                        .suggests((context, builder) -> {
+                                            handleTimeSuggestions(builder);
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> handleTimeAction(context, hurricaneManager, lang, "remove"))
+                                )
+                        )
+                );
+
+        for (String alias : Arrays.asList("hurricane", "hc")) {
+            commands.register(Commands.literal(alias).redirect(hurricaneNode.build()).build(), "Manage the Hurricane event");
+        }
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.hurricane")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
-        }
+    // ==========================================
+    // MÉTODOS AUXILIARES
+    // ==========================================
 
-        if (args.length == 0) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.usage")));
-            return true;
-        }
+    private static void handleTimeSuggestions(com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+        String input = builder.getRemaining().toLowerCase();
 
-        String subCommand = args[0].toLowerCase();
-        HurricaneManager manager = plugin.getHurricaneManager();
-
-        switch (subCommand) {
-            case "debug":
-                String debugPath = manager.isActive() ? "hurricane.commands.debug-active" : "hurricane.commands.debug-inactive";
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, debugPath)));
-                break;
-
-            case "enable":
-                if (!sender.hasPermission("permapiola.admin.hurricane.enable")) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-                    return true;
-                }
-                if (manager.isActive()) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.already-enabled")));
-                    return true;
-                }
-                manager.addHurricaneTime();
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.enabled")));
-                break;
-
-            case "disable":
-                if (!sender.hasPermission("permapiola.admin.hurricane.disable")) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-                    return true;
-                }
-                if (!manager.isActive()) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.already-disabled")));
-                    return true;
-                }
-                manager.stopHurricane();
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.disabled")));
-                break;
-
-            case "edit":
-                if (!sender.hasPermission("permapiola.admin.hurricane.edit")) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-                    return true;
-                }
-
-                if (!manager.isActive()) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.already-disabled")));
-                    return true;
-                }
-
-                if (args.length < 3) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.usage-edit")));
-                    return true;
-                }
-
-                String action = args[1].toLowerCase();
-                long secondsToApply = parseTime(args[2].toLowerCase());
-
-                if (secondsToApply <= 0) {
-                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.invalid-time-format")));
-                    return true;
-                }
-
-                String formattedTime = formatTimeDisplay(secondsToApply);
-
-                switch (action) {
-                    case "add":
-                        manager.addTime(secondsToApply);
-                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.time-added").replace("%time%", formattedTime)));
-                        sendBroadcastToAdminsAndConsole(sender, "hurricane.commands.broadcast-added", formattedTime);
-                        break;
-
-                    case "remove":
-                        if (manager.getTimeRemaining() - secondsToApply <= 0) {
-                            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.cannot-remove-all")));
-                            return true;
-                        }
-                        manager.removeTime(secondsToApply);
-                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.time-removed").replace("%time%", formattedTime)));
-                        sendBroadcastToAdminsAndConsole(sender, "hurricane.commands.broadcast-removed", formattedTime);
-                        break;
-
-                    case "set":
-                        manager.setTime(secondsToApply);
-                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.time-set").replace("%time%", formattedTime)));
-                        sendBroadcastToAdminsAndConsole(sender, "hurricane.commands.broadcast-set", formattedTime);
-                        break;
-
-                    default:
-                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.usage-edit")));
-                        break;
-                }
-                break;
-
-            default:
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.commands.usage")));
-                break;
-        }
-
-        return true;
-    }
-
-    private long parseTime(String timeString) {
-        long totalSeconds = 0;
-        boolean matched = false;
-        Matcher m = TIME_PATTERN.matcher(timeString);
-
-        if (m.matches()) {
-            if (m.group(1) != null) { totalSeconds += Long.parseLong(m.group(1)) * 3600; matched = true; }
-            if (m.group(2) != null) { totalSeconds += Long.parseLong(m.group(2)) * 60; matched = true; }
-            if (m.group(3) != null) { totalSeconds += Long.parseLong(m.group(3)); matched = true; }
-        }
-        return matched ? totalSeconds : -1;
-    }
-
-    private String formatTimeDisplay(long totalSeconds) {
-        if (totalSeconds == 0) return "0s";
-        long h = totalSeconds / 3600;
-        long m = (totalSeconds % 3600) / 60;
-        long s = totalSeconds % 60;
-        StringBuilder sb = new StringBuilder();
-        if (h > 0) sb.append(h).append("h");
-        if (m > 0) sb.append(m).append("m");
-        if (s > 0) sb.append(s).append("s");
-        return sb.toString();
-    }
-
-    private void sendBroadcastToAdminsAndConsole(CommandSender sender, String messagePath, String formattedTime) {
-        String msgRaw = lang.getMsg(Bukkit.getConsoleSender(), messagePath)
-                .replace("%player%", sender.getName())
-                .replace("%time%", formattedTime);
-
-        String coloredMsg = ColorUtils.format(msgRaw);
-
-        Bukkit.getConsoleSender().sendMessage(coloredMsg);
-
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.hasPermission("permapiola.admin") && !p.equals(sender)) {
-                p.sendMessage(ColorUtils.format(lang.getMsg(p, messagePath)
-                        .replace("%player%", sender.getName())
-                        .replace("%time%", formattedTime)));
+        if (!input.isEmpty()) {
+            char lastChar = input.charAt(input.length() - 1);
+            if (Character.isDigit(lastChar)) {
+                builder.suggest(input + "s");
+                builder.suggest(input + "m");
+                builder.suggest(input + "h");
             }
         }
     }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.hurricane")) return new ArrayList<>();
+    private static int handleTimeAction(com.mojang.brigadier.context.CommandContext<io.papermc.paper.command.brigadier.CommandSourceStack> context, HurricaneManager hurricaneManager, LanguageManager lang, String action) {
+        CommandSender sender = context.getSource().getSender();
 
-        if (args.length == 1) {
-            return SUB_COMMANDS.stream().filter(c -> c.toLowerCase().startsWith(args[0].toLowerCase())).collect(Collectors.toList());
+        if (!hurricaneManager.isActive()) {
+            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.not-active")));
+            return Command.SINGLE_SUCCESS;
         }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("edit")) {
-            return EDIT_ACTIONS.stream().filter(c -> c.toLowerCase().startsWith(args[1].toLowerCase())).collect(Collectors.toList());
+        String rawTime = StringArgumentType.getString(context, "tiempo").toLowerCase();
+
+        try {
+            int seconds = parseTimeFormat(rawTime);
+
+            String actionWordKey;
+            String msgKey;
+
+            if (action.equals("add")) {
+                hurricaneManager.addTime(seconds);
+                msgKey = "hurricane.time-added";
+                actionWordKey = "hurricane.word-added";
+            } else {
+                hurricaneManager.removeTime(seconds);
+                msgKey = "hurricane.time-removed";
+                actionWordKey = "hurricane.word-removed";
+            }
+
+            String msg = lang.getMsg(sender, msgKey).replace("%time%", rawTime);
+            sender.sendMessage(ColorUtils.format(msg));
+
+            String actionWord = lang.getMsg(sender, actionWordKey);
+            String alert = lang.getMsg(sender, "hurricane.staff-alert-time")
+                    .replace("%admin%", sender.getName())
+                    .replace("%action%", actionWord)
+                    .replace("%time%", rawTime);
+            notifyStaff(alert, sender);
+
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "hurricane.invalid-time")));
         }
 
-        if (args.length == 3 && args[0].equalsIgnoreCase("edit")) {
-            return TIME_SUGGESTIONS.stream().filter(c -> c.toLowerCase().startsWith(args[2].toLowerCase())).collect(Collectors.toList());
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int parseTimeFormat(String input) throws IllegalArgumentException {
+        if (input == null || input.isEmpty()) throw new IllegalArgumentException();
+
+        int totalSeconds = 0;
+        int currentVal = 0;
+        boolean hasValue = false;
+
+        for (char c : input.toCharArray()) {
+            if (Character.isDigit(c)) {
+                currentVal = (currentVal * 10) + Character.getNumericValue(c);
+                hasValue = true;
+            } else {
+                if (!hasValue) throw new IllegalArgumentException();
+                if (c == 'h') totalSeconds += currentVal * 3600;
+                else if (c == 'm') totalSeconds += currentVal * 60;
+                else if (c == 's') totalSeconds += currentVal;
+                else throw new IllegalArgumentException();
+
+                currentVal = 0;
+                hasValue = false;
+            }
         }
 
-        return new ArrayList<>();
+        if (hasValue || totalSeconds <= 0) throw new IllegalArgumentException();
+
+        return totalSeconds;
+    }
+
+    private static void notifyStaff(String rawMessage, CommandSender exclude) {
+        String formatted = ColorUtils.format(rawMessage);
+
+        if (!(exclude instanceof org.bukkit.command.ConsoleCommandSender)) {
+            Bukkit.getConsoleSender().sendMessage(formatted);
+        }
+
+        for (Player staff : Bukkit.getOnlinePlayers()) {
+            if (staff.hasPermission("permapiola.admin.staffchat") && !staff.equals(exclude)) {
+                staff.sendMessage(formatted);
+            }
+        }
     }
 }

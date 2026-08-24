@@ -1,55 +1,52 @@
 package pp.sheero.permapiola.utilidad.commands;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import io.papermc.paper.command.brigadier.Commands;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.EmoteManager;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-public class BroadcastCommand implements CommandExecutor, TabCompleter {
+public class BroadcastCommand {
 
-    private final LanguageManager lang;
-    private final EmoteManager emoteManager;
+    public static void register(Commands commands, LanguageManager lang, EmoteManager emoteManager) {
 
-    public BroadcastCommand(LanguageManager lang, EmoteManager emoteManager) {
-        this.lang = lang;
-        this.emoteManager = emoteManager;
-    }
+        var bcNode = Commands.literal("broadcast")
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.broadcast")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
+                .then(Commands.argument("message", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
+
+                            if (!sender.hasPermission("permapiola.admin.broadcast")) {
+                                sender.sendMessage(Component.translatable("commands.help.failed").color(NamedTextColor.RED));
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            String message = StringArgumentType.getString(context, "message");
+
+                            if (sender instanceof Player) {
+                                Player pSender = (Player) sender;
+                                message = emoteManager.translateEmotes(pSender, message);
+                            }
+
+                            String broadcastFormat = lang.getMsg(sender, "commands.broadcast.format");
+                            String fullMessage = ColorUtils.format(broadcastFormat.replace("%message%", message));
+
+                            Bukkit.broadcastMessage(fullMessage);
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
+
+        for (String alias : Arrays.asList("broadcast", "bc")) {
+            commands.register(Commands.literal(alias).redirect(bcNode.build()).build(), "Broadcast a global message");
         }
-
-        if (args.length == 0) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.broadcast.usage")));
-            return true;
-        }
-
-        String message = String.join(" ", args);
-
-        if (sender instanceof org.bukkit.entity.Player) {
-            org.bukkit.entity.Player pSender = (org.bukkit.entity.Player) sender;
-            message = emoteManager.translateEmotes(pSender, message);
-        }
-
-        String broadcastFormat = lang.getMsg(sender, "commands.broadcast.format");
-        String fullMessage = ColorUtils.format(broadcastFormat.replace("%message%", message));
-
-        Bukkit.broadcastMessage(fullMessage);
-        return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return new ArrayList<>();
     }
 }

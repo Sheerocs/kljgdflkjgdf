@@ -1,58 +1,51 @@
 package pp.sheero.permapiola.utilidad.commands;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import io.papermc.paper.command.brigadier.Commands;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.ChatManager;
 import pp.sheero.permapiola.managers.EmoteManager;
 import pp.sheero.permapiola.managers.LanguageManager;
-import pp.sheero.permapiola.utils.ColorUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-public class StaffChatCommand implements CommandExecutor, TabCompleter {
+public class StaffChatCommand {
 
-    private final ChatManager chatManager;
-    private final LanguageManager lang;
-    private final EmoteManager emoteManager;
+    public static void register(Commands commands, ChatManager chatManager, LanguageManager lang, EmoteManager emoteManager) {
 
-    public StaffChatCommand(ChatManager chatManager, LanguageManager lang, EmoteManager emoteManager) {
-        this.chatManager = chatManager;
-        this.lang = lang;
-        this.emoteManager = emoteManager;
-    }
+        var scNode = Commands.literal("staffchat")
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
-            return true;
+                .then(Commands.argument("message", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
+
+                            if (!(sender instanceof Player)) {
+                                sender.sendMessage(Component.translatable("permissions.requires.player").color(NamedTextColor.RED));
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            Player pSender = (Player) sender;
+
+                            if (!pSender.hasPermission("permapiola.admin.staffchat")) {
+                                pSender.sendMessage(Component.translatable("commands.help.failed").color(NamedTextColor.RED));
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            String message = StringArgumentType.getString(context, "message");
+                            message = emoteManager.translateEmotes(pSender, message);
+
+                            chatManager.sendStaffMessage(pSender, message);
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
+
+        for (String alias : Arrays.asList("staffchat", "sc")) {
+            commands.register(Commands.literal(alias).redirect(scNode.build()).build(), "Staff chat command");
         }
-
-        Player pSender = (Player) sender;
-
-        if (!pSender.hasPermission("permapiola.admin.staffchat")) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
-        }
-
-        if (args.length == 0) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.staffchat.usage")));
-            return true;
-        }
-
-        String message = String.join(" ", args);
-        message = emoteManager.translateEmotes(pSender, message);
-
-        chatManager.sendStaffMessage(pSender, message);
-        return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return new ArrayList<>();
     }
 }

@@ -1,13 +1,13 @@
 package pp.sheero.permapiola.utilidad.commands;
 
+import com.mojang.brigadier.Command;
+import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -20,65 +20,64 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class EmotesCommand implements CommandExecutor, TabCompleter {
+public class EmotesCommand {
 
-    private final EmoteManager emoteManager;
-    private final LanguageManager lang;
+    public static void register(Commands commands, EmoteManager emoteManager, LanguageManager lang) {
 
-    public EmotesCommand(EmoteManager emoteManager, LanguageManager lang) {
-        this.emoteManager = emoteManager;
-        this.lang = lang;
-    }
+        var emotesNode = Commands.literal("emotes")
+                .executes(context -> {
+                    CommandSender sender = context.getSource().getSender();
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) return true;
-        Player player = (Player) sender;
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(Component.translatable("permissions.requires.player").color(NamedTextColor.RED));
+                        return Command.SINGLE_SUCCESS;
+                    }
 
-        int size = emoteManager.getEmotesMap().size();
-        int invSize = (int) Math.ceil(size / 9.0) * 9;
-        if (invSize < 9) invSize = 9;
-        if (invSize > 54) invSize = 54;
+                    Player player = (Player) sender;
 
-        String rawTitle = lang.getMsg(player, "commands.emotes.gui-title");
-        Component title = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawTitle));
+                    int size = emoteManager.getEmotesMap().size();
+                    int invSize = (int) Math.ceil(size / 9.0) * 9;
+                    if (invSize < 9) invSize = 9;
+                    if (invSize > 54) invSize = 54;
 
-        Inventory inv = Bukkit.createInventory(null, invSize, title);
+                    String rawTitle = lang.getMsg(player, "commands.emotes.gui-title");
+                    Component title = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawTitle));
 
-        for (Map.Entry<String, String[]> entry : emoteManager.getEmotesMap().entrySet()) {
-            String trigger = entry.getValue()[0];
-            String emote = entry.getValue()[1];
+                    Inventory inv = Bukkit.createInventory(null, invSize, title);
 
-            ItemStack item = new ItemStack(Material.PAPER);
-            ItemMeta meta = item.getItemMeta();
+                    for (Map.Entry<String, String[]> entry : emoteManager.getEmotesMap().entrySet()) {
+                        String trigger = entry.getValue()[0];
+                        String emote = entry.getValue()[1];
 
-            String rawName = lang.getMsg(player, "commands.emotes.item-name").replace("%trigger%", trigger);
-            meta.displayName(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawName)));
+                        ItemStack item = new ItemStack(Material.PAPER);
+                        ItemMeta meta = item.getItemMeta();
 
-            List<Component> lore = new ArrayList<>();
-            lore.add(Component.empty());
+                        String rawName = lang.getMsg(player, "commands.emotes.item-name").replace("%trigger%", trigger);
+                        meta.displayName(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawName)));
 
-            String rawResult = lang.getMsg(player, "commands.emotes.lore-result").replace("%emote%", emote);
-            lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawResult)));
+                        List<Component> lore = new ArrayList<>();
+                        lore.add(Component.empty());
 
-            if (player.hasPermission("permapiola.donor")) {
-                String rawAccess = lang.getMsg(player, "commands.emotes.lore-has-access");
-                lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawAccess)));
-            } else {
-                String rawNoAccess = lang.getMsg(player, "commands.emotes.lore-no-access");
-                lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawNoAccess)));
-            }
+                        String rawResult = lang.getMsg(player, "commands.emotes.lore-result").replace("%emote%", emote);
+                        lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawResult)));
 
-            meta.lore(lore);
-            item.setItemMeta(meta);
-            inv.addItem(item);
-        }
-        player.openInventory(inv);
-        return true;
-    }
+                        if (player.hasPermission("permapiola.donor")) {
+                            String rawAccess = lang.getMsg(player, "commands.emotes.lore-has-access");
+                            lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawAccess)));
+                        } else {
+                            String rawNoAccess = lang.getMsg(player, "commands.emotes.lore-no-access");
+                            lore.add(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(rawNoAccess)));
+                        }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return new ArrayList<>();
+                        meta.lore(lore);
+                        item.setItemMeta(meta);
+                        inv.addItem(item);
+                    }
+
+                    player.openInventory(inv);
+                    return Command.SINGLE_SUCCESS;
+                });
+
+        commands.register(emotesNode.build(), "Abre la lista de emotes disponibles");
     }
 }

@@ -29,7 +29,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     private static final Pattern RESTRICTED_COLORS = Pattern.compile("(?i).*&[4klmnor].*");
     private static final Pattern VALID_CHARS = Pattern.compile("^[a-zA-Z0-9_]+$");
 
-    private static final List<String> BASE_ARGS = Arrays.asList("help", "create", "leave", "invite", "accept", "memberlist");
+    private static final List<String> BASE_ARGS = Arrays.asList("help", "create", "leave", "invite", "accept", "memberlist", "location");
     private static final List<String> ADMIN_ARGS = Arrays.asList("system", "reset", "fire", "size", "forcejoin", "forceleave", "list", "spy");
     private static final List<String> SYSTEM_ARGS = Arrays.asList("on", "off");
 
@@ -717,6 +717,44 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 }
 
                 player.sendMessage(ColorUtils.format(lang.getMsg(player, "commands.generic.line")));
+                break;
+            }
+
+            case "location": {
+                if (!isPlayer) {
+                    sendMessage(sender, "teams.only-players");
+                    return true;
+                }
+
+                if (!TeamManager.hasTeam(player)) {
+                    return true;
+                }
+
+                Team team = TeamManager.getTeam(player);
+
+                int x = player.getLocation().getBlockX();
+                int y = player.getLocation().getBlockY();
+                int z = player.getLocation().getBlockZ();
+                String coordsMsg = x + " " + y + " " + z;
+
+                String rawPrefix = LuckPermsUtils.getPrefix(player);
+                String rawSuffix = LuckPermsUtils.getSuffix(player);
+                String cleanPrefix = rawPrefix != null ? LuckPermsUtils.cleanTeamTag(rawPrefix, team) : "";
+                String cleanSuffix = rawSuffix != null ? LuckPermsUtils.cleanTeamTag(rawSuffix, team) : "";
+
+                String chatFormat = plugin.getConfig().getString("chat.team-format", "&8[&bTeamChat&8] %player_prefix%%player%%player_suffix%&f: %message%");
+                String messageToSend = ColorUtils.format(chatFormat
+                        .replace("%player_prefix%", cleanPrefix)
+                        .replace("%player_suffix%", cleanSuffix)
+                        .replace("%player%", player.getName())
+                        .replace("%message%", coordsMsg));
+
+                for (String memberName : team.getEntries()) {
+                    Player member = Bukkit.getPlayerExact(memberName);
+                    if (member != null && member.isOnline()) {
+                        member.sendMessage(messageToSend);
+                    }
+                }
                 break;
             }
         }

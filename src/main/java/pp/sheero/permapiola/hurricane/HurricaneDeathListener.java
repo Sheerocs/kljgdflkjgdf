@@ -33,7 +33,6 @@ public class HurricaneDeathListener implements Listener {
     private final LanguageManager lang;
     private final ZoneId argentinaZone = ZoneId.of("America/Argentina/Buenos_Aires");
 
-    private long durationHoursCache;
     private String headNameCache;
     private List<String> headLoreCache;
     private double extraSpinChanceOtherCache;
@@ -47,7 +46,6 @@ public class HurricaneDeathListener implements Listener {
 
     public void loadConfigCache() {
         org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
-        this.durationHoursCache = config.getLong("hurricane.duration-hours", 1);
         this.headNameCache = config.getString("hurricane.head-name", "&c&l%victim%");
         this.headLoreCache = config.getStringList("hurricane.head-lore");
         this.extraSpinChanceOtherCache = config.getDouble("demential-wheel.settings.extra-spin-chance-other", 1.0);
@@ -58,7 +56,6 @@ public class HurricaneDeathListener implements Listener {
     public void onHurricaneDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
 
-        // 1. Identificar la ruta del mensaje en el .yml si es una muerte custom
         String customCauseKey = null;
         if (victim.hasMetadata("DementialDamage")) {
             String customCause = victim.getMetadata("DementialDamage").get(0).asString();
@@ -69,7 +66,6 @@ public class HurricaneDeathListener implements Listener {
             }
         }
 
-        // 2. Early return si el jugador ya está registrado como muerto
         if (DeathStateManager.isDead(victim.getUniqueId())) {
             String vanillaDeathMsg = event.getDeathMessage();
             event.setDeathMessage(null);
@@ -90,11 +86,9 @@ public class HurricaneDeathListener implements Listener {
             return;
         }
 
-        // 3. Capturar el mensaje base y cancelar el anuncio global de Minecraft
         String vanillaDeathMsg = event.getDeathMessage();
         event.setDeathMessage(null);
 
-        // 4. Preparar el mensaje FORZADO EN ESPAÑOL para Discord y la Cabeza del jugador
         String serverCause;
         if (customCauseKey != null) {
             serverCause = lang.getMsg(Bukkit.getConsoleSender(), customCauseKey).replace("%player%", victim.getName());
@@ -106,7 +100,6 @@ public class HurricaneDeathListener implements Listener {
         int currentDeathNumber = DeathStateManager.incrementAndGetTotalDeaths();
         int currentDay = plugin.getDayManager().getCurrentDay();
 
-        // ¡Se envía el embed a Discord usando el mensaje en español (serverCause)!
         plugin.getDiscordManager().sendDeathEmbed(victim, serverCause, currentDeathNumber, currentDay);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -118,27 +111,24 @@ public class HurricaneDeathListener implements Listener {
         LocalDateTime now = LocalDateTime.now(argentinaZone);
         String dateStr = now.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
         String timeStr = now.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        String coordsStr = deathLocation.getBlockX() + " " + deathLocation.getBlockY() + " " + deathLocation.getBlockZ();
         int ping = victim.getPing();
 
         double currentTps = Bukkit.getTPS()[0];
         String tps = String.valueOf(Math.round(currentTps * 100.0) / 100.0);
 
-        // Usamos la causa en español para el Lore de la cabeza
-        dropPlayerHead(victim, dateStr, timeStr, serverCause);
+        addPlayerHeadToDrops(event, victim, dateStr, timeStr, serverCause);
 
         boolean wasActive = plugin.getHurricaneManager().isActive();
-        long addedHours = this.durationHoursCache;
+        long addedSeconds = plugin.getHurricaneManager().getDurationSecondsCache();
 
         victim.getWorld().strikeLightningEffect(deathLocation);
 
-        // 5. Broadcast in-game (Ahora le pasamos también la llave "customCauseKey")
-        broadcastAndPlayEffects(victim, vanillaDeathMsg, customCauseKey, coordsStr, ping, tps, wasActive, addedHours);
+        broadcastAndPlayEffects(victim, vanillaDeathMsg, customCauseKey, deathLocation, ping, tps, wasActive, addedSeconds);
 
         plugin.getHurricaneManager().addHurricaneTime();
 
         if (!wasActive) {
-            plugin.getDementialWheelManager().startSequence();
+            plugin.getDementialWheelManager().startSequence(victim);
         } else {
             String worldName = victim.getWorld().getName();
             boolean isNetherOrEnd = worldName.endsWith("_nether") || worldName.endsWith("_the_end");
@@ -146,10 +136,8 @@ public class HurricaneDeathListener implements Listener {
             double chance = isNetherOrEnd ? this.extraSpinChanceOtherCache : this.extraSpinChanceOverworldCache;
 
             if (Math.random() <= chance) {
-                long totalDurationSeconds = addedHours * 3600;
-                long eventDuration = isNetherOrEnd ? totalDurationSeconds : (totalDurationSeconds / 2);
-
-                plugin.getDementialWheelManager().startExtraSequence(eventDuration);
+                long eventDuration = isNetherOrEnd ? addedSeconds : (addedSeconds / 2);
+                plugin.getDementialWheelManager().startExtraSequence(victim, eventDuration);
             }
         }
 
@@ -167,6 +155,7 @@ public class HurricaneDeathListener implements Listener {
 
             if (!victim.hasPermission("permapiola.donor")) {
                 victim.kickPlayer(ColorUtils.format(lang.getMsg(victim, "hurricane.death-event.kick-reason")));
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "customwhitelist remove " + victim.getName());
             } else {
                 String specTitle = lang.getMsg(victim, "hurricane.death-event.spectator-title");
                 String specSub = lang.getMsg(victim, "hurricane.death-event.spectator-subtitle");
@@ -175,7 +164,7 @@ public class HurricaneDeathListener implements Listener {
         }, 140L);
     }
 
-    private void dropPlayerHead(Player victim, String date, String time, String cause) {
+    private void addPlayerHeadToDrops(PlayerDeathEvent event, Player victim, String date, String time, String cause) {
         ItemStack head = new ItemStack(org.bukkit.Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         if (meta != null) {
@@ -193,11 +182,12 @@ public class HurricaneDeathListener implements Listener {
             meta.setLore(lore);
             head.setItemMeta(meta);
         }
-        victim.getWorld().dropItemNaturally(victim.getLocation(), head);
+
+        event.getDrops().add(head);
     }
 
-    private void broadcastAndPlayEffects(Player victim, String vanillaMsg, String customCauseKey, String coords, int ping, String tps, boolean wasActive, long addedHours) {
-        String rawWorldName = victim.getWorld().getName();
+    private void broadcastAndPlayEffects(Player victim, String vanillaMsg, String customCauseKey, Location deathLoc, int ping, String tps, boolean wasActive, long addedSeconds) {
+        String rawWorldName = deathLoc.getWorld().getName();
         String worldDisplay;
         if (rawWorldName.equals("world_permapiola_fallen_memories")) {
             worldDisplay = "Fallen Memories";
@@ -209,14 +199,38 @@ public class HurricaneDeathListener implements Listener {
             worldDisplay = "Over";
         }
 
+        String coordsStr = deathLoc.getBlockX() + " " + deathLoc.getBlockY() + " " + deathLoc.getBlockZ();
+
+        String consoleCause = (customCauseKey != null) ? lang.getMsg(Bukkit.getConsoleSender(), customCauseKey).replace("%player%", victim.getName()) : vanillaMsg;
+        String consoleMsgRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.broadcast-message").replace("%victim%", victim.getName());
+        Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleMsgRaw));
+
+        String consoleHoverRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.broadcast-hover")
+                .replace("%cause%", consoleCause)
+                .replace("%x%", String.valueOf(deathLoc.getBlockX()))
+                .replace("%y%", String.valueOf(deathLoc.getBlockY()))
+                .replace("%z%", String.valueOf(deathLoc.getBlockZ()))
+                .replace("%world%", worldDisplay)
+                .replace("%ping%", String.valueOf(ping))
+                .replace("%tps%", tps)
+                .replace("\\n", "\n");
+
+        String[] hoverLines = consoleHoverRaw.split("\n");
+        int end = hoverLines.length - 1;
+        while (end >= 0 && (hoverLines[end].trim().isEmpty() || hoverLines[end].toLowerCase().contains("click") || hoverLines[end].toLowerCase().contains("clic"))) {
+            end--;
+        }
+
+        StringBuilder consoleHover = new StringBuilder();
+        for (int i = 0; i <= end; i++) {
+            consoleHover.append(hoverLines[i]);
+            if (i < end) consoleHover.append("\n");
+        }
+        Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleHover.toString()));
+
         for (Player p : Bukkit.getOnlinePlayers()) {
 
-            String playerCause;
-            if (customCauseKey != null) {
-                playerCause = lang.getMsg(p, customCauseKey).replace("%player%", victim.getName());
-            } else {
-                playerCause = vanillaMsg;
-            }
+            String playerCause = (customCauseKey != null) ? lang.getMsg(p, customCauseKey).replace("%player%", victim.getName()) : vanillaMsg;
 
             String title = lang.getMsg(p, "hurricane.death-event.title");
             String sub = lang.getMsg(p, "hurricane.death-event.subtitle").replace("%victim%", victim.getName());
@@ -229,27 +243,42 @@ public class HurricaneDeathListener implements Listener {
             String msgRaw = lang.getMsg(p, "hurricane.death-event.broadcast-message").replace("%victim%", victim.getName());
             String hoverRaw = lang.getMsg(p, "hurricane.death-event.broadcast-hover")
                     .replace("%cause%", playerCause)
-                    .replace("%x%", String.valueOf(victim.getLocation().getBlockX()))
-                    .replace("%y%", String.valueOf(victim.getLocation().getBlockY()))
-                    .replace("%z%", String.valueOf(victim.getLocation().getBlockZ()))
+                    .replace("%x%", String.valueOf(deathLoc.getBlockX()))
+                    .replace("%y%", String.valueOf(deathLoc.getBlockY()))
+                    .replace("%z%", String.valueOf(deathLoc.getBlockZ()))
                     .replace("%world%", worldDisplay)
                     .replace("%ping%", String.valueOf(ping))
                     .replace("%tps%", tps)
                     .replace("\\n", "\n");
 
-            String command = TeamManager.hasTeam(p) ? "/tc " + coords : "/msg " + p.getName() + " " + coords;
+            ClickEvent clickEvent = null;
+
+            if (p.getGameMode() == GameMode.SPECTATOR || p.getGameMode() == GameMode.CREATIVE) {
+                if (p.hasPermission("permapiola.admin")) {
+                    clickEvent = ClickEvent.runCommand("/tp " + coordsStr);
+                }
+            } else if (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) {
+                String clipboardText = coordsStr + " " + worldDisplay;
+                clickEvent = ClickEvent.copyToClipboard(clipboardText);
+            }
 
             Component message = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(msgRaw))
-                    .hoverEvent(HoverEvent.showText(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(hoverRaw))))
-                    .clickEvent(ClickEvent.runCommand(command));
+                    .hoverEvent(HoverEvent.showText(LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(hoverRaw))));
+
+            if (clickEvent != null) {
+                message = message.clickEvent(clickEvent);
+            }
 
             p.sendMessage(message);
 
+            String formattedAdded = plugin.getHurricaneManager().getFormattedDuration(addedSeconds, p);
+
             if (wasActive) {
-                String addedMsg = lang.getMsg(p, "hurricane.death-event.hurricane-added").replace("%time%", String.valueOf(addedHours));
+                String addedMsg = lang.getMsg(p, "hurricane.death-event.hurricane-added").replace("%duration%", formattedAdded);
                 p.sendMessage(ColorUtils.format(addedMsg));
             } else {
-                p.sendMessage(ColorUtils.format(lang.getMsg(p, "hurricane.death-event.hurricane-start")));
+                String startMsg = lang.getMsg(p, "hurricane.death-event.hurricane-start").replace("%duration%", formattedAdded);
+                p.sendMessage(ColorUtils.format(startMsg));
             }
         }
     }

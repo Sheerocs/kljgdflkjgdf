@@ -1,6 +1,6 @@
 name: PermaPiola
 description: $description
-version: '2.3'
+version: '2.8'
 
 main: pp.sheero.permapiola.PermaPiola
 api-version: '1.21.11'
@@ -16,61 +16,8 @@ commands:
   team:
     description: Comando principal de equipos.
     aliases: [t]
-  teamchat:
-    description: Chat de equipo.
-    aliases: [tc]
   totem:
     description: Sistema de tótems y sonidos.
-  chat:
-    description: Cambiar de canal de chat.
-  helpop:
-    description: Enviar duda al staff.
-  msg:
-    description: Enviar mensaje privado.
-    aliases: [w, whisper,tell]
-  reply:
-    description: Responder último mensaje.
-    aliases: [r]
-  togglesb:
-    description: Activar/Desactivar Scoreboard.
-  emotes:
-    description: Abre la lista de emotes disponibles.
-  rename:
-    description: Renombrar ítem en mano.
-    aliases: [rn]
-  broadcast:
-    description: Anuncio global.
-    aliases: [bc]
-  echest:
-    description: Ver enderchest de un jugador.
-    aliases: [enderchest, ec]
-  gm:
-    description: Cambiar modo de juego por número.
-  gmc:
-    description: Modo Creativo.
-  gms:
-    description: Modo Supervivencia.
-  gma:
-    description: Modo Aventura.
-  gmsp:
-    description: Modo Espectador.
-  inv:
-    description: Ver inventario o tumba de un jugador.
-    aliases: [inventory]
-  playerip:
-    description: Ver IP de un jugador.
-    aliases: [getip]
-  permapiola:
-    description: Recargar configuraciones.
-  revive:
-    description: Revivir a un jugador muerto.
-  staffchat:
-    description: Chat privado para el staff.
-    aliases: [sc]
-  hurricane:
-    description: Modificar el death hurricane.
-  dementialwheel:
-    description: Control forzado de la Demential Wheel
 
 permissions:
   permapiola.admin:
@@ -155,19 +102,19 @@ permissions:
     description: Permite reiniciar el tiempo de los jugadores.
 
   permapiola.admin.hurricane:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permite administrar las opciones generales del Death Hurricane.
   permapiola.admin.hurricane.disable:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permite desactivar el evento Death Hurricane.
   permapiola.admin.hurricane.enable:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permite activar el evento Death Hurricane manualmente.
   permapiola.admin.hurricane.edit:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permite añadir, remover o establecer el tiempo del Death Hurricane.
 
   permapiola.admin.dementialwheel:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permite controlar y forzar los eventos de la Demential Wheel.
 
   permapiola.staff:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Permiso base para acceder a funciones, chats y alertas del equipo administrativo (Staff).
 
   permapiola.donor:
     description: Permiso base para mensajes de entrada/salida de donadores.

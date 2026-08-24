@@ -21,6 +21,8 @@ public class DementialWheelManager {
     private final Map<DementialEventType, Long> eventExpirations = new HashMap<>();
     private final java.util.Set<java.util.UUID> erodedPlayers = new java.util.HashSet<>();
 
+    private final List<Integer> sequenceTasks = new ArrayList<>();
+
     private final File dataFile;
 
     private int putrifiedWaterDuration;
@@ -63,7 +65,16 @@ public class DementialWheelManager {
 
     public boolean hasEvent(DementialEventType event) { return activeEvents.contains(event); }
 
+    public void cancelPendingSequences() {
+        for (int taskId : sequenceTasks) {
+            Bukkit.getScheduler().cancelTask(taskId);
+        }
+        sequenceTasks.clear();
+    }
+
     public void stopWheel() {
+        cancelPendingSequences();
+
         for (int taskId : expirationTasks.values()) Bukkit.getScheduler().cancelTask(taskId);
         expirationTasks.clear();
         eventExpirations.clear();
@@ -94,6 +105,10 @@ public class DementialWheelManager {
         }
     }
 
+    public boolean isRolling() {
+        return !sequenceTasks.isEmpty();
+    }
+
     public void checkPendingRestoration(Player p) {
         if (!hasEvent(DementialEventType.LIFE_EROSION) && erodedPlayers.contains(p.getUniqueId())) {
             double healthToRestore = this.lifeErosionHeartsToRemove * 2.0;
@@ -107,29 +122,100 @@ public class DementialWheelManager {
         }
     }
 
-    public void startSequence() {
-        startSequenceInternal(-1, false);
+    public void startSequence(Player victim) {
+        startSequenceInternal(victim, -1, false);
     }
 
-    public void startExtraSequence(long durationSeconds) {
-        startSequenceInternal(durationSeconds, true);
+    public void startExtraSequence(Player victim, long durationSeconds) {
+        startSequenceInternal(victim, durationSeconds, true);
     }
 
-    private void startSequenceInternal(long durationSeconds, boolean isExtraSpin) {
+    // ==============================================================
+    // LÓGICA DE MENSAJES DINÁMICOS Y MULTI-IDIOMA CORREGIDA
+    // ==============================================================
+
+    public void broadcastEventMessage(DementialEventType event) {
+        String path = "demential-wheel.events." + event.name().toLowerCase();
+
+        String consoleRaw = lang.getMsg(Bukkit.getConsoleSender(), path);
+        Bukkit.getConsoleSender().sendMessage(ColorUtils.format(applyEventPlaceholders(consoleRaw, event, Bukkit.getConsoleSender())));
+
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            String playerRaw = lang.getMsg(p, path);
+            p.sendMessage(ColorUtils.format(applyEventPlaceholders(playerRaw, event, p)));
+        }
+    }
+
+    private String applyEventPlaceholders(String rawMsg, DementialEventType event, org.bukkit.command.CommandSender sender) {
+        switch (event) {
+            case TOTEM_DROP:
+                int totemChance = (int) (plugin.getConfig().getDouble("demential-wheel.settings.totem-drop.chance", 0.10) * 100);
+                return rawMsg.replace("%chance%", String.valueOf(totemChance));
+            case PUTRIFIED_WATER:
+                int witherLevel = plugin.getConfig().getInt("demential-wheel.settings.putrified-water.wither-amplifier", 0) + 1;
+                return rawMsg.replace("%level%", String.valueOf(witherLevel));
+            case TOXIC_AIR:
+                int layer = plugin.getConfig().getInt("demential-wheel.settings.toxic-air.y-layer", 40);
+                return rawMsg.replace("%layer%", String.valueOf(layer));
+            case BROKEN_GEAR:
+                int gearChance = (int) (plugin.getConfig().getDouble("demential-wheel.settings.broken-gear.extra-damage-percentage", 0.50) * 100);
+                return rawMsg.replace("%chance%", String.valueOf(gearChance));
+            case LIFE_EROSION:
+                double hearts = plugin.getConfig().getDouble("demential-wheel.settings.life-erosion.hearts-to-remove", 1.0);
+                String slotWordKey = (hearts == 1.0) ? "demential-wheel.words.slot-singular" : "demential-wheel.words.slot-plural";
+                String slotWord = lang.getMsg(sender, slotWordKey); // Usa el sender específico (jugador o consola)
+
+                String heartsStr = (hearts == Math.floor(hearts)) ? String.valueOf((int)hearts) : String.valueOf(hearts);
+                return rawMsg.replace("%hearts%", heartsStr).replace("%slot_word%", slotWord);
+            case ACID_RAIN:
+            case NONE:
+            default:
+                return rawMsg;
+        }
+    }
+
+    private void broadcastMessage(String path) {
+        String consoleMsg = ColorUtils.format(lang.getMsg(Bukkit.getConsoleSender(), path));
+        Bukkit.getConsoleSender().sendMessage(consoleMsg);
+
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.sendMessage(ColorUtils.format(lang.getMsg(p, path)));
+        }
+    }
+
+    private void startSequenceInternal(Player victim, long durationSeconds, boolean isExtraSpin) {
         if (!isExtraSpin) {
             broadcastMessage("demential-wheel.warning");
         }
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-3"), 300L);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-2"), 320L);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-1"), 340L);
+        if (victim != null && plugin.getDeathMessageManager().hasMessage(victim.getUniqueId())) {
+            String customMsg = plugin.getDeathMessageManager().getMessage(victim.getUniqueId());
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            String consoleRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-message.broadcast")
+                    .replace("%player%", victim.getName())
+                    .replace("%message%", customMsg);
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleRaw));
+
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                String pRaw = lang.getMsg(p, "hurricane.death-message.broadcast")
+                        .replace("%player%", victim.getName())
+                        .replace("%message%", customMsg);
+                p.sendMessage(ColorUtils.format(pRaw));
+            }
+        }
+
+        sequenceTasks.add(Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-3"), 300L).getTaskId());
+        sequenceTasks.add(Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-2"), 320L).getTaskId());
+        sequenceTasks.add(Bukkit.getScheduler().runTaskLater(plugin, () -> broadcastMessage("demential-wheel.spin-1"), 340L).getTaskId());
+
+        sequenceTasks.add(Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            sequenceTasks.clear();
+
             DementialEventType picked = pickRandomEvent();
             if (picked == DementialEventType.NONE) return;
 
             activeEvents.add(picked);
-            broadcastMessage("demential-wheel.events." + picked.name().toLowerCase());
+            broadcastEventMessage(picked);
             executeOneTimeEvent(picked);
 
             if (durationSeconds > 0) {
@@ -142,7 +228,7 @@ public class DementialWheelManager {
                 expirationTasks.put(picked, taskId);
             }
             saveData();
-        }, 400L);
+        }, 400L).getTaskId());
     }
 
     public void removeEvent(DementialEventType event) {
@@ -156,10 +242,15 @@ public class DementialWheelManager {
             restoreLifeErosion();
         }
 
-        String msgRaw = lang.getMsg(Bukkit.getConsoleSender(), "demential-wheel.event-ended").replace("%event%", event.name());
-        String msg = ColorUtils.format(msgRaw);
-        for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(msg);
-        Bukkit.getConsoleSender().sendMessage(msg);
+        String niceEventName = pp.sheero.permapiola.dementialwheel.DementialWheelCommand.formatEventName(event.name());
+
+        String consoleRaw = lang.getMsg(Bukkit.getConsoleSender(), "demential-wheel.event-ended").replace("%event%", niceEventName);
+        Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleRaw));
+
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            String pRaw = lang.getMsg(p, "demential-wheel.event-ended").replace("%event%", niceEventName);
+            p.sendMessage(ColorUtils.format(pRaw));
+        }
 
         saveData();
     }
@@ -173,14 +264,6 @@ public class DementialWheelManager {
         }
         if (available.isEmpty()) return DementialEventType.NONE;
         return available.get(random.nextInt(available.size()));
-    }
-
-    private void broadcastMessage(String path) {
-        String msg = ColorUtils.format(lang.getMsg(Bukkit.getConsoleSender(), path));
-        Bukkit.getConsoleSender().sendMessage(msg);
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            p.sendMessage(msg);
-        }
     }
 
     public void forceEvent(DementialEventType event) {

@@ -1,6 +1,7 @@
 package pp.sheero.permapiola.managers;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,6 +28,7 @@ public class InactivityManager implements Listener {
     private final File dataFile;
 
     private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
+    private final Map<UUID, String> nameCache = new ConcurrentHashMap<>();
     private final Map<UUID, SessionData> activeSessions = new ConcurrentHashMap<>();
 
     private final long maxOfflineTimeMs;
@@ -69,31 +71,64 @@ public class InactivityManager implements Listener {
             try { dataFile.createNewFile(); } catch (IOException e) { e.printStackTrace(); }
         }
         YamlConfiguration dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+        boolean needsMigration = false;
 
         if (dataConfig.contains("players")) {
             for (String uuidStr : dataConfig.getConfigurationSection("players").getKeys(false)) {
-                long lastSeen = dataConfig.getLong("players." + uuidStr + ".last-seen", System.currentTimeMillis());
                 try {
-                    cache.put(UUID.fromString(uuidStr), lastSeen);
+                    UUID uuid = UUID.fromString(uuidStr);
+                    String basePath = "players." + uuidStr;
+
+                    long lastSeen = dataConfig.getLong(basePath + ".last-seen", System.currentTimeMillis());
+                    String name = dataConfig.getString(basePath + ".name", "Desconocido");
+
+                    if (name.equals("Desconocido")) {
+                        @SuppressWarnings("deprecation")
+                        OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+                        if (op.getName() != null) {
+                            name = op.getName();
+                            needsMigration = true;
+                        }
+                    }
+
+                    cache.put(uuid, lastSeen);
+                    nameCache.put(uuid, name);
                 } catch (IllegalArgumentException ignored) {}
             }
+        }
+
+        if (needsMigration) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveData);
         }
     }
 
     public void saveData() {
         Map<UUID, Long> snapshot = new HashMap<>(cache);
+        Map<UUID, String> nameSnapshot = new HashMap<>(nameCache);
 
         for (Player p : Bukkit.getOnlinePlayers()) {
             SessionData session = activeSessions.get(p.getUniqueId());
             if (session != null && session.originalLastSeen > 0) {
                 snapshot.put(p.getUniqueId(), session.originalLastSeen);
+                nameSnapshot.put(p.getUniqueId(), p.getName());
             }
         }
 
         YamlConfiguration config = new YamlConfiguration();
 
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        java.time.ZoneId zone = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
+
         for (Map.Entry<UUID, Long> entry : snapshot.entrySet()) {
-            config.set("players." + entry.getKey().toString() + ".last-seen", entry.getValue());
+            String path = "players." + entry.getKey().toString();
+            long timestamp = entry.getValue();
+
+            java.time.Instant instant = java.time.Instant.ofEpochMilli(timestamp);
+            java.time.LocalDateTime date = java.time.LocalDateTime.ofInstant(instant, zone);
+
+            config.set(path + ".name", nameSnapshot.getOrDefault(entry.getKey(), "Desconocido"));
+            config.set(path + ".last-seen", timestamp);
+            config.set(path + ".date", date.format(formatter));
         }
 
         try { config.save(dataFile); } catch (IOException e) { e.printStackTrace(); }
@@ -108,6 +143,8 @@ public class InactivityManager implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
+
+        nameCache.put(uuid, player.getName());
 
         if (DeathStateManager.isDead(uuid)) {
             cache.remove(uuid);
@@ -167,14 +204,12 @@ public class InactivityManager implements Listener {
 
     private void markAsSafe(Player player, SessionData session) {
         session.isSafe = true;
-        //
         session.accumulatedTime = 0;
         session.originalLastSeen = System.currentTimeMillis();
 
         cache.put(player.getUniqueId(), session.originalLastSeen);
 
         String rawMessage = plugin.getLanguageManager().getMsg(player, "inactivity.safe-message");
-
         player.sendMessage(ColorUtils.format(rawMessage));
     }
 
@@ -183,6 +218,8 @@ public class InactivityManager implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
+
+        nameCache.put(uuid, player.getName());
 
         if (DeathStateManager.isDead(uuid)) {
             activeSessions.remove(uuid);

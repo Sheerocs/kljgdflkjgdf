@@ -85,6 +85,13 @@ public class DeathInventoryManager {
         }
     }
 
+    public static void clearInventory(Player player) {
+        if (hasDeathInventory(player)) {
+            deathInventories.remove(player.getUniqueId());
+            saveDataAsync();
+        }
+    }
+
     public static ItemStack[] getSavedContents(Player player) {
         return getSavedContents(player.getUniqueId());
     }

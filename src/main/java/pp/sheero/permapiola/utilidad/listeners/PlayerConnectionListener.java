@@ -1,5 +1,6 @@
 package pp.sheero.permapiola.utilidad.listeners;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -45,21 +46,15 @@ public class PlayerConnectionListener implements Listener {
             }
         }
 
-        String messagePath;
+        event.setJoinMessage(null);
 
+        String messagePath;
         if (player.hasPermission("permapiola.admin") || player.hasPermission("permapiola.donor")) {
             messagePath = "join.donator";
         } else {
             messagePath = "join.default";
         }
 
-        String rawMessage = lang.getMsg(player, messagePath);
-
-        if (rawMessage == null || rawMessage.isEmpty()) {
-            event.setJoinMessage(null);
-            return;
-        }
-
         String prefix = LuckPermsUtils.getPrefix(player);
         String suffix = LuckPermsUtils.getSuffix(player);
 
@@ -72,31 +67,32 @@ public class PlayerConnectionListener implements Listener {
         if (prefix == null) prefix = "";
         if (suffix == null) suffix = "";
 
-        String finalMessage = rawMessage.replace("%player_prefix%", prefix)
-                .replace("%player_suffix%", suffix)
-                .replace("%player%", player.getName());
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            String rawMessage = lang.getMsg(onlinePlayer, messagePath);
 
-        event.setJoinMessage(ColorUtils.format(finalMessage));
+            if (rawMessage != null && !rawMessage.isEmpty()) {
+                String finalMessage = rawMessage.replace("%player_prefix%", prefix)
+                        .replace("%player_suffix%", suffix)
+                        .replace("%player%", player.getName());
+
+                onlinePlayer.sendMessage(ColorUtils.format(finalMessage));
+            }
+        }
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        String messagePath;
 
+        event.setQuitMessage(null);
+
+        String messagePath;
         if (player.hasPermission("permapiola.admin") || player.hasPermission("permapiola.donor")) {
             messagePath = "quit.donator";
         } else {
             messagePath = "quit.default";
         }
 
-        String rawMessage = lang.getMsg(player, messagePath);
-
-        if (rawMessage == null || rawMessage.isEmpty()) {
-            event.setQuitMessage(null);
-            return;
-        }
-
         String prefix = LuckPermsUtils.getPrefix(player);
         String suffix = LuckPermsUtils.getSuffix(player);
 
@@ -109,10 +105,16 @@ public class PlayerConnectionListener implements Listener {
         if (prefix == null) prefix = "";
         if (suffix == null) suffix = "";
 
-        String finalMessage = rawMessage.replace("%player_prefix%", prefix)
-                .replace("%player_suffix%", suffix)
-                .replace("%player%", player.getName());
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            String rawMessage = lang.getMsg(onlinePlayer, messagePath);
 
-        event.setQuitMessage(ColorUtils.format(finalMessage));
+            if (rawMessage != null && !rawMessage.isEmpty()) {
+                String finalMessage = rawMessage.replace("%player_prefix%", prefix)
+                        .replace("%player_suffix%", suffix)
+                        .replace("%player%", player.getName());
+
+                onlinePlayer.sendMessage(ColorUtils.format(finalMessage));
+            }
+        }
     }
 }

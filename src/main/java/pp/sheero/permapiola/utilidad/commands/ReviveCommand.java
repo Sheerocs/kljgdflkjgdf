@@ -1,12 +1,16 @@
 package pp.sheero.permapiola.utilidad.commands;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.managers.LanguageManager;
@@ -14,85 +18,96 @@ import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.DeathInventoryManager;
 import pp.sheero.permapiola.utils.DeathStateManager;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ReviveCommand implements CommandExecutor, TabCompleter {
+public class ReviveCommand {
 
-    private final PermaPiola plugin;
-    private final LanguageManager lang;
+    public static void register(Commands commands, PermaPiola plugin, LanguageManager lang) {
 
-    public ReviveCommand(PermaPiola plugin, LanguageManager lang) {
-        this.plugin = plugin;
-        this.lang = lang;
+        var reviveNode = Commands.literal("revive")
+                .requires(source -> source.getSender().hasPermission("permapiola.admin.revive"))
+
+                .then(Commands.argument("target", ArgumentTypes.player())
+
+                        .suggests((context, builder) -> {
+                            String input = builder.getRemaining().toLowerCase();
+                            for (String name : DeathStateManager.getDeadPlayerNames().values()) {
+                                if (name.toLowerCase().startsWith(input)) {
+                                    builder.suggest(name);
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
+
+                        .executes(context -> executeRevive(context, false, plugin, lang))
+
+                        .then(Commands.literal("paid")
+                                .executes(context -> executeRevive(context, true, plugin, lang))
+                        )
+                );
+
+        commands.register(reviveNode.build(), "Revive a dead player");
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.revive")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
-        }
+    private static int executeRevive(CommandContext<CommandSourceStack> context, boolean isPaid, PermaPiola plugin, LanguageManager lang) {
+        CommandSender sender = context.getSource().getSender();
+        PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
 
-        if (args.length == 0) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.usage")));
-            return true;
-        }
+        try {
+            List<Player> targets = resolver.resolve(context.getSource());
 
-        Player target = Bukkit.getPlayerExact(args[0]);
-        if (target == null) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
-            return true;
-        }
-
-        if (!DeathStateManager.isDead(target.getUniqueId())) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.not-dead")));
-            return true;
-        }
-
-        Location spawnLoc = Bukkit.getWorlds().get(0).getSpawnLocation();
-        target.teleport(spawnLoc);
-
-        target.setGameMode(GameMode.SURVIVAL);
-
-        if (DeathInventoryManager.hasDeathInventory(target)) {
-            DeathInventoryManager.restoreInventory(target);
-        }
-
-        DeathStateManager.setDead(target.getUniqueId(), false);
-
-        plugin.getDiscordManager().deleteDeathMessage(target.getUniqueId());
-        DeathStateManager.decrementTotalDeaths();
-
-        long durationHours = plugin.getConfig().getLong("hurricane.duration-hours", 1);
-        long durationSeconds = durationHours * 3600;
-        plugin.getHurricaneManager().removeTime(durationSeconds);
-
-        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.success").replace("%player%", target.getName())));
-
-        String alertMsg = lang.getMsg(sender, "commands.revive.staff-alert")
-                .replace("%admin%", sender.getName())
-                .replace("%player%", target.getName());
-
-        for (Player staff : Bukkit.getOnlinePlayers()) {
-            if (staff.hasPermission("permapiola.admin.staffchat")) {
-                staff.sendMessage(ColorUtils.format(alertMsg));
+            if (targets.isEmpty()) {
+                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.player-offline")));
+                return Command.SINGLE_SUCCESS;
             }
-        }
 
-        return true;
-    }
+            Player target = targets.get(0);
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (sender.hasPermission("permapiola.admin.revive") && args.length == 1) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getName().toLowerCase().startsWith(args[0].toLowerCase())) {
-                    completions.add(p.getName());
+            if (!DeathStateManager.isDead(target.getUniqueId())) {
+                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.not-dead")));
+                return Command.SINGLE_SUCCESS;
+            }
+
+            Location spawnLoc = Bukkit.getWorlds().get(0).getSpawnLocation();
+            target.teleport(spawnLoc);
+            target.setGameMode(GameMode.SURVIVAL);
+
+            if (!isPaid) {
+                if (DeathInventoryManager.hasDeathInventory(target)) {
+                    DeathInventoryManager.restoreInventory(target);
+                }
+            } else {
+                DeathInventoryManager.clearInventory(target);
+            }
+
+            DeathStateManager.setDead(target.getUniqueId(), false);
+            plugin.getDiscordManager().deleteDeathMessage(target.getUniqueId());
+            DeathStateManager.decrementTotalDeaths();
+
+            long durationHours = plugin.getConfig().getLong("hurricane.duration-hours", 1);
+            long durationSeconds = durationHours * 3600;
+            plugin.getHurricaneManager().removeTime(durationSeconds);
+
+            plugin.getDementialWheelManager().cancelPendingSequences();
+
+            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.success").replace("%player%", target.getName())));
+
+            String alertMsg = lang.getMsg(sender, "commands.revive.staff-alert")
+                    .replace("%admin%", sender.getName())
+                    .replace("%player%", target.getName());
+
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(alertMsg));
+
+            for (Player staff : Bukkit.getOnlinePlayers()) {
+                if (staff.hasPermission("permapiola.admin.staffchat")) {
+                    staff.sendMessage(ColorUtils.format(alertMsg));
                 }
             }
+
+        } catch (CommandSyntaxException e) {
+            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.revive.player-offline")));
         }
-        return completions;
+
+        return Command.SINGLE_SUCCESS;
     }
 }

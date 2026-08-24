@@ -1,11 +1,15 @@
 package pp.sheero.permapiola.utilidad.commands;
 
-import org.bukkit.Bukkit;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.EmoteManager;
 import pp.sheero.permapiola.managers.LanguageManager;
@@ -13,92 +17,96 @@ import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
 import pp.sheero.permapiola.utils.ReplyManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class MsgCommand implements CommandExecutor, TabCompleter {
+public class MsgCommand {
 
-    private final LanguageManager lang;
-    private final EmoteManager emoteManager;
+    public static void register(Commands commands, LanguageManager lang, EmoteManager emoteManager) {
 
-    public MsgCommand(LanguageManager lang, EmoteManager emoteManager) {
-        this.lang = lang;
-        this.emoteManager = emoteManager;
-    }
+        var msgNode = Commands.literal("msg")
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
-            return true;
-        }
-        Player pSender = (Player) sender;
+                .then(Commands.argument("targets", ArgumentTypes.players())
 
-        boolean isDead = pp.sheero.permapiola.utils.DeathStateManager.isDead(pSender.getUniqueId());
-        boolean isStaff = pSender.hasPermission("permapiola.admin") || pSender.hasPermission("permapiola.staff");
+                        .then(Commands.argument("message", StringArgumentType.greedyString())
+                                .executes(context -> {
+                                    CommandSender sender = context.getSource().getSender();
 
-        if (isDead && !isStaff) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(pSender, "commands.generic.no-permission")));
-            return true;
-        }
+                                    if (!(sender instanceof Player)) {
+                                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
+                                        return Command.SINGLE_SUCCESS;
+                                    }
 
-        if (args.length < 2) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.msg.usage")));
-            return true;
-        }
+                                    Player pSender = (Player) sender;
+                                    boolean isDead = pp.sheero.permapiola.utils.DeathStateManager.isDead(pSender.getUniqueId());
+                                    boolean isStaff = pSender.hasPermission("permapiola.admin") || pSender.hasPermission("permapiola.staff");
 
-        Player target = Bukkit.getPlayerExact(args[0]);
-        if (target == null) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
-            return true;
-        }
+                                    if (isDead && !isStaff) {
+                                        pSender.sendMessage(ColorUtils.format(lang.getMsg(pSender, "commands.generic.no-permission")));
+                                        return Command.SINGLE_SUCCESS;
+                                    }
 
-        String rawMessage = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-        rawMessage = emoteManager.translateEmotes(pSender, rawMessage);
+                                    String rawMessage = StringArgumentType.getString(context, "message");
+                                    rawMessage = emoteManager.translateEmotes(pSender, rawMessage);
 
-        boolean isSenderDonor = pSender.hasPermission("permapiola.donor.color");
+                                    boolean isSenderDonor = pSender.hasPermission("permapiola.donor.color");
+                                    String pathType = isSenderDonor ? "donator" : "default";
+                                    String formatToPath = "private.format-to." + pathType;
+                                    String formatFromPath = "private.format-from." + pathType;
 
-        String pathType = isSenderDonor ? "donator" : "default";
-        String formatToPath = "private.format-to." + pathType;
-        String formatFromPath = "private.format-from." + pathType;
+                                    String formattedMessage = isSenderDonor ? ColorUtils.format(rawMessage) : rawMessage;
+                                    String rawFormatTo = lang.getMsg(pSender, formatToPath);
 
-        String formattedMessage = isSenderDonor ? ColorUtils.format(rawMessage) : rawMessage;
+                                    PlayerSelectorArgumentResolver resolver = context.getArgument("targets", PlayerSelectorArgumentResolver.class);
 
-        String rawFormatTo = lang.getMsg(pSender, formatToPath);
-        String rawFormatFrom = lang.getMsg(target, formatFromPath);
+                                    try {
+                                        List<Player> targets = resolver.resolve(context.getSource());
 
-        String toMessage = rawFormatTo
-                .replace("%target_prefix%", LuckPermsUtils.getPrefix(target))
-                .replace("%target_suffix%", LuckPermsUtils.getSuffix(target))
-                .replace("%target%", target.getName())
-                .replace("%message%", formattedMessage);
+                                        if (targets.isEmpty()) {
+                                            sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                            return Command.SINGLE_SUCCESS;
+                                        }
 
-        String fromMessage = rawFormatFrom
-                .replace("%sender_prefix%", LuckPermsUtils.getPrefix(pSender))
-                .replace("%sender_suffix%", LuckPermsUtils.getSuffix(pSender))
-                .replace("%sender%", pSender.getName())
-                .replace("%message%", formattedMessage);
+                                        for (Player target : targets) {
 
-        pSender.sendMessage(ColorUtils.format(toMessage));
-        target.sendMessage(ColorUtils.format(fromMessage));
-        target.playSound(target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 100f, 0.5f);
+                                            String targetPrefix = LuckPermsUtils.getPrefix(target) != null ? LuckPermsUtils.getPrefix(target) : "";
+                                            String targetSuffix = LuckPermsUtils.getSuffix(target) != null ? LuckPermsUtils.getSuffix(target) : "";
+                                            String senderPrefix = LuckPermsUtils.getPrefix(pSender) != null ? LuckPermsUtils.getPrefix(pSender) : "";
+                                            String senderSuffix = LuckPermsUtils.getSuffix(pSender) != null ? LuckPermsUtils.getSuffix(pSender) : "";
 
-        ReplyManager.setReplyTarget(pSender.getUniqueId(), target.getUniqueId());
-        return true;
-    }
+                                            String toTemplate = rawFormatTo
+                                                    .replace("%target_prefix%", targetPrefix)
+                                                    .replace("%target_suffix%", targetSuffix)
+                                                    .replace("%target%", target.getName());
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
+                                            String rawFormatFrom = lang.getMsg(target, formatFromPath);
+                                            String fromTemplate = rawFormatFrom
+                                                    .replace("%sender_prefix%", senderPrefix)
+                                                    .replace("%sender_suffix%", senderSuffix)
+                                                    .replace("%sender%", pSender.getName());
 
-        if (args.length == 1) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getName().toLowerCase().startsWith(args[0].toLowerCase())) {
-                    completions.add(p.getName());
-                }
-            }
-        }
-        return completions;
+                                            String coloredToTemplate = ColorUtils.format(toTemplate);
+                                            String coloredFromTemplate = ColorUtils.format(fromTemplate);
+
+                                            String finalToMessage = coloredToTemplate.replace("%message%", formattedMessage);
+                                            String finalFromMessage = coloredFromTemplate.replace("%message%", formattedMessage);
+
+                                            pSender.sendMessage(finalToMessage);
+                                            target.sendMessage(finalFromMessage);
+                                            target.playSound(target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 100f, 0.5f);
+
+                                            ReplyManager.setReplyTarget(pSender.getUniqueId(), target.getUniqueId());
+                                            ReplyManager.setReplyTarget(target.getUniqueId(), pSender.getUniqueId());
+                                        }
+
+                                    } catch (CommandSyntaxException e) {
+                                        sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                    }
+
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                );
+
+        commands.register(msgNode.build());
     }
 }

@@ -12,12 +12,12 @@ system:
 inactivity:
   # Formatos aceptados: w (semanas), d (días), h (horas), m (minutos), s (segundos)
   # Ejemplo: "48h" (48 horas), "2d" (2 días)
-  max-offline-time: "2s"
+  max-offline-time: "3d"
   required-playtime: "1m"
   grace-period: "1m"
 
 discord:
-  enabled: true
+  enabled: false
   channel-name: "muertes"
   death-embed:
     title: "¡%victim% ha sido permabaneado!"
@@ -40,7 +40,7 @@ discord:
 # ============================================================= #
 
 hurricane:
-  duration-hours: 1
+  duration: "1h" # Formatos: 15m, 1h, 1h30m
   head-name: "&c&l%victim%"
   head-lore:
     - "&c&lHA SIDO PERMABANEADO"
@@ -100,8 +100,6 @@ command-blocker:
     - "helpop"
     - "msg"
     - "tell"
-    - "whisper"
-    - "w"
     - "reply"
     - "r"
     - "togglesb"
@@ -140,7 +138,7 @@ chat:
     default: "%player_prefix%%player%%player_suffix%&7: %message%"
   spec-format:
     default: "&8[&7Spec&8] %player_prefix%%player%&7: %message%"
-    donator: "&8[&7Spec&8] %player_prefix%%player%&7: &f%message%"
+    donator: "&8[&7Spec&8] %player_prefix%%player%&f: %message%"
   team-format: "&8[&bTeamChat&8] %player_prefix%%player%%player_suffix%&f: %message%"
   staff-format: "&4[StaffChat] &f%player_prefix%%player%&f: %message%"
   override:

@@ -18,41 +18,32 @@ import pp.sheero.permapiola.teams.TeamManager;
 
 public class LuckPermsUtils {
 
-    // ==========================================================
-    // SISTEMA DE EVENTOS AUTOMÁTICO - VERSIÓN CORREGIDA
-    // ==========================================================
     public static void registerListeners(PermaPiola plugin) {
         LuckPerms api = LuckPermsProvider.get();
 
-        // Este evento es infalible: detecta cuando un rango se añade, se quita, o expira por tiempo.
         api.getEventBus().subscribe(plugin, net.luckperms.api.event.user.UserDataRecalculateEvent.class, event -> {
             User user = event.getUser();
 
-            // Esperamos 10 ticks (medio segundo) para asegurar que Scoreboard y LuckPerms estén 100% sincronizados
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 Player player = Bukkit.getPlayer(user.getUniqueId());
                 if (player == null || !player.isOnline()) return;
 
                 Team team = TeamManager.getTeam(player);
-                if (team == null) return; // Si no tiene equipo, no hay nada que arreglar
+                if (team == null) return;
 
                 boolean isRanked = hasSpecialRank(player);
 
-                // FIX: Usamos los predicados nativos de LuckPerms para evitar el error de "getPriority"
                 boolean hasPrefixTag = user.getNodes().stream()
                         .anyMatch(NodeType.PREFIX.predicate(n -> n.getPriority() == 9999));
 
                 boolean hasSuffixTag = user.getNodes().stream()
                         .anyMatch(NodeType.SUFFIX.predicate(n -> n.getPriority() == 9999));
 
-                // Aplicamos TU lógica de "reingreso" silencioso:
-                // CASO 1: Compró/Consiguió VIP, pero el equipo sigue de Prefix.
                 if (isRanked && hasPrefixTag) {
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                         applyPersonalTeamTag(player, team.getDisplayName());
                     });
                 }
-                // CASO 2: Expiró el VIP, pero el equipo se quedó trabado en Suffix.
                 else if (!isRanked && hasSuffixTag) {
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                         applyPersonalTeamTag(player, team.getDisplayName());
@@ -61,7 +52,6 @@ public class LuckPermsUtils {
             }, 1L);
         });
     }
-    // ==========================================================
 
     public static String getPrefix(Player player) {
         LuckPerms api = LuckPermsProvider.get();
@@ -171,7 +161,6 @@ public class LuckPermsUtils {
         User user = api.getUserManager().getUser(player.getUniqueId());
         if (user == null) return;
 
-        // Se limpia cualquier rastro de tags de equipo anteriores
         user.data().clear(NodeType.PREFIX.predicate(n -> n.getPriority() == 9999));
         user.data().clear(NodeType.SUFFIX.predicate(n -> n.getPriority() == 9999));
 

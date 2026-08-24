@@ -1,9 +1,13 @@
 package pp.sheero.permapiola.managers;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -55,6 +59,35 @@ public class AFKManager implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent e) {
+        Action action = e.getAction();
+
+        if (action == Action.PHYSICAL) return;
+
+        if (action == Action.LEFT_CLICK_AIR || action == Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+
+        if (e.getClickedBlock() != null) {
+            Material type = e.getClickedBlock().getType();
+            String name = type.name();
+
+            if (type == Material.NOTE_BLOCK ||
+                    type == Material.LEVER ||
+                    type == Material.BELL ||
+                    name.contains("TRAPDOOR") ||
+                    name.contains("DOOR") ||
+                    name.contains("BUTTON") ||
+                    name.contains("FENCE_GATE")) {
+                return;
+            }
+        }
+
+        if (e.getItem() != null) {
+            if (e.getItem().getType() == Material.FISHING_ROD) {
+                return;
+            }
+        }
+
         updateActivity(e.getPlayer());
     }
 

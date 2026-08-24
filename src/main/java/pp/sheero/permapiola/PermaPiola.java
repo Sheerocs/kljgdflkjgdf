@@ -3,7 +3,7 @@ package pp.sheero.permapiola;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import pp.sheero.permapiola.hurricane.*;
 import pp.sheero.permapiola.managers.*;
 import pp.sheero.permapiola.playtime.*;
@@ -28,6 +28,7 @@ public final class PermaPiola extends JavaPlugin {
     private TotemManager totemManager;
     private DayManager dayManager;
     private HurricaneManager hurricaneManager;
+    private DeathMessageManager deathMessageManager;
     private pp.sheero.permapiola.discord.DiscordManager discordManager;
     private pp.sheero.permapiola.dementialwheel.DementialWheelManager dementialWheelManager;
     private InactivityManager inactivityManager;
@@ -54,6 +55,7 @@ public final class PermaPiola extends JavaPlugin {
         this.totemManager = new TotemManager(this);
         this.dayManager = new DayManager(this);
         this.hurricaneManager = new HurricaneManager(this, languageManager);
+        this.deathMessageManager = new DeathMessageManager(this);
         this.discordManager = new pp.sheero.permapiola.discord.DiscordManager(this);
         this.dementialWheelManager = new pp.sheero.permapiola.dementialwheel.DementialWheelManager(this, languageManager);
         this.dementialWheelManager.loadData();
@@ -66,9 +68,39 @@ public final class PermaPiola extends JavaPlugin {
 
         TeamManager.loadConfigCache(this);
 
-        // 3. Registro de Comandos
+        // 3. Registro de Comandos (Antiguos Bukkit)
         getLogger().info("Loading commands...");
         registerCommands();
+
+        // 3.5 Registro de Comandos Modernos (Brigadier)
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+            pp.sheero.permapiola.utilidad.commands.GmCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.GmaCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.GmcCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.GmsCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.GmspCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.MsgCommand.register(event.registrar(), languageManager, emoteManager);
+            pp.sheero.permapiola.utilidad.commands.ReplyCommand.register(event.registrar(), languageManager, emoteManager);
+            pp.sheero.permapiola.utilidad.commands.ChatCommand.register(event.registrar(), chatManager, languageManager);
+            pp.sheero.permapiola.utilidad.commands.StaffChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
+            pp.sheero.permapiola.teams.TeamChatCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
+            pp.sheero.permapiola.utilidad.commands.BroadcastCommand.register(event.registrar(), languageManager, emoteManager);
+            pp.sheero.permapiola.utilidad.commands.PermaPiolaCommand.register(event.registrar(), this, languageManager, emoteManager);
+            pp.sheero.permapiola.utilidad.commands.EmotesCommand.register(event.registrar(), emoteManager, languageManager);
+            pp.sheero.permapiola.utilidad.commands.EnderChestCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.SidebarCommand.register(event.registrar(), scoreboardManager, languageManager);
+            pp.sheero.permapiola.utilidad.commands.ReviveCommand.register(event.registrar(), this, languageManager);
+            pp.sheero.permapiola.utilidad.commands.PlayerIpCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.RenameCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.utilidad.commands.InventoryCommand.register(event.registrar(), languageManager);
+            pp.sheero.permapiola.hurricane.DeathMessageCommand.register(event.registrar(), this, languageManager);
+            pp.sheero.permapiola.dementialwheel.DementialWheelCommand.register(event.registrar(), dementialWheelManager, languageManager);
+            pp.sheero.permapiola.hurricane.HurricaneCommand.register(event.registrar(), hurricaneManager, languageManager);
+            // GmcCommand.register(...)
+            // GmsCommand.register(...)
+            // PlaytimeCommand.register(...)
+        });
 
         // 4. Tareas, Dependencias (ProtocolLib) y Carga de Datos Estáticos
         new PlaytimeTask(this, afkManager, playtimeManager).runTaskTimer(this, 20L, 20L);
@@ -93,6 +125,7 @@ public final class PermaPiola extends JavaPlugin {
         if (totemManager != null) totemManager.saveData();
         if (chatManager != null) chatManager.saveData();
         if (hurricaneManager != null) hurricaneManager.saveData();
+        if (deathMessageManager != null) deathMessageManager.saveData();
         if (dementialWheelManager != null) dementialWheelManager.saveData();
         if (inactivityManager != null) inactivityManager.saveData();
 
@@ -114,7 +147,7 @@ public final class PermaPiola extends JavaPlugin {
         // Listeners Base y Módulos
         pm.registerEvents(this.afkManager, this);
         pm.registerEvents(this.scoreboardManager, this);
-        pm.registerEvents(this.totemListener, this); // Registrado desde la variable
+        pm.registerEvents(this.totemListener, this);
         pm.registerEvents(this.hurricaneManager, this);
         pm.registerEvents(new pp.sheero.permapiola.hurricane.HurricaneDeathListener(this, languageManager), this);
 
@@ -141,8 +174,6 @@ public final class PermaPiola extends JavaPlugin {
         // Teams
         getCommand("team").setExecutor(new TeamCommand(this, languageManager));
         getCommand("team").setTabCompleter(new TeamCommand(this, languageManager));
-        getCommand("teamchat").setExecutor(new TeamChatCommand(this, languageManager));
-        getCommand("teamchat").setTabCompleter(new TeamChatCommand(this, languageManager));
 
         // Playtime
         getCommand("playtime").setExecutor(new PlaytimeCommand(this, playtimeManager, languageManager));
@@ -151,56 +182,6 @@ public final class PermaPiola extends JavaPlugin {
         // Totems
         getCommand("totem").setExecutor(new TotemCommand(this, totemManager, languageManager));
         getCommand("totem").setTabCompleter(new TotemCommand(this, totemManager, languageManager));
-
-        // Eventos (Hurricane & Demential Wheel)
-        getCommand("hurricane").setExecutor(new HurricaneCommand(this, languageManager));
-        getCommand("hurricane").setTabCompleter(new HurricaneCommand(this, languageManager));
-        getCommand("dementialwheel").setExecutor(new pp.sheero.permapiola.dementialwheel.DementialWheelCommand(this));
-        getCommand("dementialwheel").setTabCompleter(new pp.sheero.permapiola.dementialwheel.DementialWheelCommand(this));
-
-        // Comunicación y Chat
-        getCommand("chat").setExecutor(new ChatCommand(chatManager, languageManager));
-        getCommand("chat").setTabCompleter(new ChatCommand(chatManager, languageManager));
-        getCommand("staffchat").setExecutor(new StaffChatCommand(chatManager, languageManager, emoteManager));
-        getCommand("staffchat").setTabCompleter(new StaffChatCommand(chatManager, languageManager, emoteManager));
-        getCommand("msg").setExecutor(new MsgCommand(languageManager, emoteManager));
-        getCommand("msg").setTabCompleter(new MsgCommand(languageManager, emoteManager));
-        getCommand("reply").setExecutor(new ReplyCommand(languageManager, emoteManager));
-        getCommand("reply").setTabCompleter(new ReplyCommand(languageManager, emoteManager));
-        getCommand("helpop").setExecutor(new HelpOpCommand(this, languageManager, emoteManager));
-        getCommand("helpop").setTabCompleter(new HelpOpCommand(this, languageManager, emoteManager));
-        getCommand("broadcast").setExecutor(new BroadcastCommand(languageManager, emoteManager));
-        getCommand("broadcast").setTabCompleter(new BroadcastCommand(languageManager, emoteManager));
-
-        // Administrador
-        getCommand("inv").setExecutor(new InventoryCommand(this, languageManager));
-        getCommand("inv").setTabCompleter(new InventoryCommand(this, languageManager));
-        getCommand("echest").setExecutor(new EnderChestCommand(languageManager));
-        getCommand("echest").setTabCompleter(new EnderChestCommand(languageManager));
-        getCommand("playerip").setExecutor(new PlayerIpCommand(languageManager));
-        getCommand("playerip").setTabCompleter(new PlayerIpCommand(languageManager));
-        getCommand("revive").setExecutor(new ReviveCommand(this, languageManager));
-        getCommand("revive").setTabCompleter(new ReviveCommand(this, languageManager));
-        getCommand("permapiola").setExecutor(new PermaPiolaCommand(this, languageManager, emoteManager));
-        getCommand("permapiola").setTabCompleter(new PermaPiolaCommand(this, languageManager, emoteManager));
-
-        // Utilidad y GameModes
-        getCommand("togglesb").setExecutor(new ScoreboardCommand(scoreboardManager, languageManager));
-        getCommand("togglesb").setTabCompleter(new ScoreboardCommand(scoreboardManager, languageManager));
-        getCommand("emotes").setExecutor(new EmotesCommand(emoteManager, languageManager));
-        getCommand("emotes").setTabCompleter(new EmotesCommand(emoteManager, languageManager));
-        getCommand("rename").setExecutor(new RenameCommand(languageManager));
-        getCommand("rename").setTabCompleter(new RenameCommand(languageManager));
-        getCommand("gm").setExecutor(new GmCommand(languageManager));
-        getCommand("gm").setTabCompleter(new GmCommand(languageManager));
-        getCommand("gmc").setExecutor(new GmcCommand(languageManager));
-        getCommand("gmc").setTabCompleter(new GmcCommand(languageManager));
-        getCommand("gms").setExecutor(new GmsCommand(languageManager));
-        getCommand("gms").setTabCompleter(new GmsCommand(languageManager));
-        getCommand("gma").setExecutor(new GmaCommand(languageManager));
-        getCommand("gma").setTabCompleter(new GmaCommand(languageManager));
-        getCommand("gmsp").setExecutor(new GmspCommand(languageManager));
-        getCommand("gmsp").setTabCompleter(new GmspCommand(languageManager));
     }
 
     // ==========================================================
@@ -214,6 +195,7 @@ public final class PermaPiola extends JavaPlugin {
     public LanguageManager getLanguageManager() { return languageManager; }
     public DayManager getDayManager() { return dayManager; }
     public HurricaneManager getHurricaneManager() { return hurricaneManager; }
+    public DeathMessageManager getDeathMessageManager() { return deathMessageManager; }
     public pp.sheero.permapiola.discord.DiscordManager getDiscordManager() { return discordManager; }
     public pp.sheero.permapiola.dementialwheel.DementialWheelManager getDementialWheelManager() { return dementialWheelManager; }
     public EmoteManager getEmoteManager() { return emoteManager; }

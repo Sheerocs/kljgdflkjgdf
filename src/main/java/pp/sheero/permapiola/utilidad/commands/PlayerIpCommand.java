@@ -1,71 +1,64 @@
 package pp.sheero.permapiola.utilidad.commands;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class PlayerIpCommand implements CommandExecutor, TabCompleter {
+public class PlayerIpCommand {
 
-    private final LanguageManager lang;
+    public static void register(Commands commands, LanguageManager lang) {
 
-    public PlayerIpCommand(LanguageManager lang) {
-        this.lang = lang;
-    }
+        var ipNode = Commands.literal("playerip")
+                .requires(source -> source.getSender().hasPermission("permapiola.admin.playerip"))
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+                .then(Commands.argument("target", ArgumentTypes.player())
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
+                            PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
 
-        if (!sender.hasPermission("permapiola.admin.playerip")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
+                            try {
+                                List<Player> targets = resolver.resolve(context.getSource());
+
+                                if (targets.isEmpty()) {
+                                    sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                    return Command.SINGLE_SUCCESS;
+                                }
+
+                                Player target = targets.get(0);
+                                InetSocketAddress address = target.getAddress();
+
+                                if (address != null && address.getAddress() != null) {
+                                    String cleanIp = address.getAddress().getHostAddress();
+                                    String successMsg = lang.getMsg(sender, "commands.playerip.success")
+                                            .replace("%player%", target.getName())
+                                            .replace("%ip%", cleanIp);
+                                    sender.sendMessage(ColorUtils.format(successMsg));
+                                } else {
+                                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.playerip.error")));
+                                }
+
+                            } catch (CommandSyntaxException e) {
+                                sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                            }
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
+
+        for (String alias : Arrays.asList("playerip", "getip")) {
+            commands.register(Commands.literal(alias).redirect(ipNode.build()).build(), "Get a player's IP address");
         }
-
-        if (args.length == 0) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.playerip.usage")));
-            return true;
-        }
-
-        Player target = Bukkit.getPlayerExact(args[0]);
-        if (target == null) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
-            return true;
-        }
-
-        InetSocketAddress address = target.getAddress();
-        if (address != null && address.getAddress() != null) {
-            String cleanIp = address.getAddress().getHostAddress();
-            String successMsg = lang.getMsg(sender, "commands.playerip.success")
-                    .replace("%player%", target.getName())
-                    .replace("%ip%", cleanIp);
-            sender.sendMessage(ColorUtils.format(successMsg));
-        } else {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.playerip.error")));
-        }
-
-        return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (!sender.hasPermission("permapiola.admin.playerip")) return completions;
-
-        if (args.length == 1) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getName().toLowerCase().startsWith(args[0].toLowerCase())) {
-                    completions.add(p.getName());
-                }
-            }
-        }
-        return completions;
     }
 }

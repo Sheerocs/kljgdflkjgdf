@@ -1,11 +1,13 @@
 package pp.sheero.permapiola.utilidad.commands;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import io.papermc.paper.command.brigadier.Commands;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.managers.EmoteManager;
@@ -13,75 +15,79 @@ import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-public class HelpOpCommand implements CommandExecutor, TabCompleter {
+public class HelpOpCommand {
 
-    private final PermaPiola plugin;
-    private final LanguageManager lang;
-    private final EmoteManager emoteManager;
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private static final Map<UUID, Long> cooldowns = new HashMap<>();
 
-    public HelpOpCommand(PermaPiola plugin, LanguageManager lang, EmoteManager emoteManager) {
-        this.plugin = plugin;
-        this.lang = lang;
-        this.emoteManager = emoteManager;
-    }
+    public static void register(Commands commands, PermaPiola plugin, LanguageManager lang, EmoteManager emoteManager) {
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
-            return true;
-        }
-        Player pSender = (Player) sender;
+        var helpopNode = Commands.literal("helpop")
 
-        UUID playerUUID = pSender.getUniqueId();
-        long configCooldownSeconds = plugin.getConfig().getLong("helpop.cooldown-seconds", 5);
-        long cooldownTimeMillis = configCooldownSeconds * 1000;
+                .then(Commands.argument("message", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
 
-        if (cooldownTimeMillis > 0 && cooldowns.containsKey(playerUUID)) {
-            long timeElapsed = System.currentTimeMillis() - cooldowns.get(playerUUID);
-            if (timeElapsed < cooldownTimeMillis) {
-                long timeLeft = (cooldownTimeMillis - timeElapsed) / 1000;
-                pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.helpop.cooldown")
-                        .replace("%time%", String.valueOf(timeLeft + 1))));
-                return true;
-            }
-        }
+                            if (!(sender instanceof Player)) {
+                                sender.sendMessage(Component.translatable("permissions.requires.player").color(NamedTextColor.RED));
+                                return Command.SINGLE_SUCCESS;
+                            }
 
-        if (args.length == 0) {
-            pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.helpop.usage")));
-            return true;
-        }
+                            Player pSender = (Player) sender;
+                            UUID playerUUID = pSender.getUniqueId();
 
-        String message = String.join(" ", args);
-        message = emoteManager.translateEmotes(pSender, message);
+                            long configCooldownSeconds = plugin.getConfig().getLong("helpop.cooldown-seconds", 5);
+                            long cooldownTimeMillis = configCooldownSeconds * 1000;
 
-        String finalMessage = pSender.hasPermission("permapiola.donor.color") ? ColorUtils.format("&f" + message) : message;
+                            if (cooldownTimeMillis > 0 && cooldowns.containsKey(playerUUID)) {
+                                long timeElapsed = System.currentTimeMillis() - cooldowns.get(playerUUID);
+                                if (timeElapsed < cooldownTimeMillis) {
+                                    long timeLeft = (cooldownTimeMillis - timeElapsed) / 1000;
+                                    pSender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.helpop.cooldown")
+                                            .replace("%time%", String.valueOf(timeLeft + 1))));
+                                    return Command.SINGLE_SUCCESS;
+                                }
+                            }
 
-        String senderFormat = LuckPermsUtils.getPrefix(pSender) + pSender.getName() + LuckPermsUtils.getSuffix(pSender);
+                            String rawMessage = StringArgumentType.getString(context, "message");
+                            rawMessage = emoteManager.translateEmotes(pSender, rawMessage);
 
-        String formatBase = lang.getMsg(pSender, "commands.helpop.format");
-        String fullMessage = ColorUtils.format(formatBase
-                .replace("%player_format%", senderFormat)
-                .replace("%message%", finalMessage));
+                            boolean isSenderDonor = pSender.hasPermission("permapiola.donor.color");
 
-        pSender.sendMessage(fullMessage);
+                            String finalMessageText = isSenderDonor
+                                    ? ColorUtils.format("&f" + rawMessage)
+                                    : rawMessage;
 
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            if (onlinePlayer.hasPermission("permapiola.admin.helpop") && !onlinePlayer.equals(pSender)) {
-                onlinePlayer.sendMessage(fullMessage);
-                onlinePlayer.playSound(onlinePlayer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 100f, 1.5f);
-            }
-        }
+                            String prefix = LuckPermsUtils.getPrefix(pSender);
+                            String suffix = LuckPermsUtils.getSuffix(pSender);
+                            String senderFormat = (prefix != null ? prefix : "") + pSender.getName() + (suffix != null ? suffix : "");
 
-        if (cooldownTimeMillis > 0) cooldowns.put(playerUUID, System.currentTimeMillis());
-        return true;
-    }
+                            String formatBase = lang.getMsg(pSender, "commands.helpop.format");
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return new ArrayList<>();
+                            String coloredFormatBase = ColorUtils.format(formatBase.replace("%player_format%", senderFormat));
+
+                            String fullMessage = coloredFormatBase.replace("%message%", finalMessageText);
+
+                            pSender.sendMessage(fullMessage);
+
+                            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                                if (onlinePlayer.hasPermission("permapiola.admin.helpop") && !onlinePlayer.equals(pSender)) {
+                                    onlinePlayer.sendMessage(fullMessage);
+                                    onlinePlayer.playSound(onlinePlayer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 100f, 1.5f);
+                                }
+                            }
+
+                            if (cooldownTimeMillis > 0) {
+                                cooldowns.put(playerUUID, System.currentTimeMillis());
+                            }
+
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
+
+        commands.register(helpopNode.build(), "Send a message to the staff");
     }
 }

@@ -26,6 +26,7 @@ public class DiscordManager {
     private String locTitle;
     private String locFormat;
     private String footerFormat;
+    private String deathMsgTitle;
 
     public DiscordManager(PermaPiola plugin) {
         this.plugin = plugin;
@@ -50,6 +51,39 @@ public class DiscordManager {
         this.locTitle = config.getString("discord.death-embed.location-title", "Ubicación");
         this.locFormat = config.getString("discord.death-embed.location-format", "Coordenadas: %x% %y% %z%\nMundo: %world%");
         this.footerFormat = config.getString("discord.death-embed.footer", "TPS: %tps% | Ping: %ping%ms • %date%");
+        this.deathMsgTitle = config.getString("discord.death-embed.death-message-title", "Últimas palabras");
+    }
+
+    private String wrapText(String text, int maxLineLength) {
+        StringBuilder result = new StringBuilder();
+        String[] words = text.split(" ");
+        int currentLineLength = 0;
+
+        for (String word : words) {
+            if (word.length() > maxLineLength) {
+                if (currentLineLength > 0) {
+                    result.append("\n");
+                    currentLineLength = 0;
+                }
+                for (int i = 0; i < word.length(); i += maxLineLength) {
+                    String chunk = word.substring(i, Math.min(i + maxLineLength, word.length()));
+                    result.append(chunk).append("\n");
+                }
+                continue;
+            }
+
+            if (currentLineLength + word.length() + 1 > maxLineLength) {
+                result.append("\n");
+                currentLineLength = 0;
+            } else if (currentLineLength > 0) {
+                result.append(" ");
+                currentLineLength++;
+            }
+
+            result.append(word);
+            currentLineLength += word.length();
+        }
+        return result.toString().trim();
     }
 
     public void sendDeathEmbed(Player victim, String vanillaCause, int deathNumber, int currentDay) {
@@ -93,7 +127,8 @@ public class DiscordManager {
                         .replace("%death_number%", String.valueOf(deathNumber));
                 embed.setDescription(description + "\n\n");
 
-                embed.addField(causeTitle, vanillaCause, false);
+                String cleanCause = vanillaCause.replaceAll("(?i)[§&][0-9a-fk-orx]", "");
+                embed.addField(causeTitle, cleanCause, false);
 
                 String formattedLoc = locFormat
                         .replace("%x%", String.valueOf(loc.getBlockX()))
@@ -101,6 +136,14 @@ public class DiscordManager {
                         .replace("%z%", String.valueOf(loc.getBlockZ()))
                         .replace("%world%", worldName);
                 embed.addField(locTitle, "```\n" + formattedLoc + "\n```", false);
+
+                if (plugin.getDeathMessageManager().hasMessage(victimUUID)) {
+                    String customMsg = plugin.getDeathMessageManager().getMessage(victimUUID);
+
+                    String wrappedMsg = wrapText(customMsg, 50);
+
+                    embed.addField(deathMsgTitle, wrappedMsg, false);
+                }
 
                 java.time.LocalDateTime now = java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
                 String dateStr = now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));

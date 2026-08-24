@@ -11,7 +11,7 @@ public class EmoteGUIListener implements Listener {
     public void onClick(InventoryClickEvent e) {
         if (e.getView().title() != null) {
             String title = PlainTextComponentSerializer.plainText().serialize(e.getView().title());
-            if (title.equals("Lista de Emotes")) {
+            if (title.equals("Lista de Emotes") || title.equals("Emotes List")) {
                 e.setCancelled(true);
             }
         }

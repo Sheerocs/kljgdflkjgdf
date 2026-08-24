@@ -1,95 +1,107 @@
 package pp.sheero.permapiola.utilidad.commands;
 
-import org.bukkit.Bukkit;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.ParticleUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class GmCommand implements CommandExecutor, TabCompleter {
+public class GmCommand {
 
-    private final LanguageManager lang;
-    public GmCommand(LanguageManager lang) { this.lang = lang; }
+    public static void register(Commands commands, LanguageManager lang) {
+        var gmNode = Commands.literal("gm")
+                .requires(source -> source.getSender().hasPermission("permapiola.admin.gamemode"));
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.gamemode")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
+        for (int i = 0; i <= 3; i++) {
+            final int modeNum = i;
+            GameMode targetMode = getGameModeByInt(modeNum);
+            String modeKey = getModeKeyByInt(modeNum);
+
+            gmNode.then(Commands.literal(String.valueOf(modeNum))
+
+                    .executes(context -> {
+                        CommandSender sender = context.getSource().getSender();
+                        if (!(sender instanceof Player)) {
+                            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
+                            return Command.SINGLE_SUCCESS;
+                        }
+                        applyGamemode((Player) sender, sender, targetMode, modeKey, true);
+                        return Command.SINGLE_SUCCESS;
+                    })
+
+                    .then(Commands.argument("target", ArgumentTypes.players())
+                            .executes(context -> {
+                                CommandSender sender = context.getSource().getSender();
+                                PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
+
+                                try {
+                                    List<Player> targets = resolver.resolve(context.getSource());
+
+                                    if (targets.isEmpty()) {
+                                        sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                        return Command.SINGLE_SUCCESS;
+                                    }
+
+                                    for (Player targetPlayer : targets) {
+                                        boolean isSelf = targetPlayer.equals(sender);
+                                        applyGamemode(targetPlayer, sender, targetMode, modeKey, isSelf);
+                                    }
+
+                                } catch (CommandSyntaxException e) {
+                                    sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                }
+
+                                return Command.SINGLE_SUCCESS;
+                            })
+                    )
+            );
         }
 
-        if (args.length == 0) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.usage-1")));
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.usage-2")));
-            return true;
-        }
+        commands.register(gmNode.build());
+    }
 
-        GameMode targetMode; String modeKey;
-        switch (args[0]) {
-            case "0": targetMode = GameMode.SURVIVAL; modeKey = "survival"; break;
-            case "1": targetMode = GameMode.CREATIVE; modeKey = "creative"; break;
-            case "2": targetMode = GameMode.ADVENTURE; modeKey = "adventure"; break;
-            case "3": targetMode = GameMode.SPECTATOR; modeKey = "spectator"; break;
-            default:
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.invalid-number")));
-                return true;
+    private static GameMode getGameModeByInt(int mode) {
+        switch (mode) {
+            case 0: return GameMode.SURVIVAL;
+            case 1: return GameMode.CREATIVE;
+            case 2: return GameMode.ADVENTURE;
+            case 3: return GameMode.SPECTATOR;
+            default: return GameMode.SURVIVAL;
         }
+    }
 
-        Player targetPlayer;
-        if (args.length >= 2) {
-            targetPlayer = Bukkit.getPlayerExact(args[1]);
-            if (targetPlayer == null) {
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
-                return true;
-            }
-        } else {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
-                return true;
-            }
-            targetPlayer = (Player) sender;
+    private static String getModeKeyByInt(int mode) {
+        switch (mode) {
+            case 0: return "survival";
+            case 1: return "creative";
+            case 2: return "adventure";
+            case 3: return "spectator";
+            default: return "survival";
         }
+    }
 
-        if (targetPlayer.getGameMode() == targetMode) return true;
+    private static void applyGamemode(Player targetPlayer, CommandSender sender, GameMode targetMode, String modeKey, boolean isSelf) {
+        if (targetPlayer.getGameMode() == targetMode) return;
 
         targetPlayer.setGameMode(targetMode);
         ParticleUtils.spawnGamemodeParticles(targetPlayer, targetMode);
+        Component translatedMode = Component.translatable("gameMode." + modeKey);
 
-        if (targetPlayer.equals(sender)) {
-            String modeName = lang.getMsg(sender, "commands.gamemode.names." + modeKey);
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.self").replace("%mode%", modeName)));
+        if (isSelf) {
+            sender.sendMessage(Component.translatable("commands.gamemode.success.self", translatedMode));
         } else {
-            String targetModeName = lang.getMsg(targetPlayer, "commands.gamemode.names." + modeKey);
-            String senderModeName = lang.getMsg(sender, "commands.gamemode.names." + modeKey);
-            targetPlayer.sendMessage(ColorUtils.format(lang.getMsg(targetPlayer, "commands.gamemode.other-target").replace("%mode%", targetModeName)));
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.other-sender").replace("%player%", targetPlayer.getName()).replace("%mode%", senderModeName)));
+            sender.sendMessage(Component.translatable("commands.gamemode.success.other", targetPlayer.displayName(), translatedMode));
+            targetPlayer.sendMessage(Component.translatable("gameMode.changed", translatedMode));
         }
-        return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (!sender.hasPermission("permapiola.admin.gamemode")) return completions;
-
-        if (args.length == 1) {
-            for (String mode : Arrays.asList("0", "1", "2", "3")) {
-                if (mode.startsWith(args[0])) completions.add(mode);
-            }
-        } else if (args.length == 2) {
-            Bukkit.getOnlinePlayers().forEach(p -> {
-                if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) completions.add(p.getName());
-            });
-        }
-        return completions;
     }
 }

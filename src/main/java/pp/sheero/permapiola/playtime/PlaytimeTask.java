@@ -1,6 +1,7 @@
 package pp.sheero.permapiola.playtime;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import pp.sheero.permapiola.PermaPiola;
@@ -24,6 +25,8 @@ public class PlaytimeTask extends BukkitRunnable {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (DeathStateManager.isDead(player.getUniqueId())) continue;
             if (afkManager.isAFK(player)) continue;
+            GameMode gm = player.getGameMode();
+            if (gm != GameMode.SURVIVAL && gm != GameMode.ADVENTURE) continue;
 
             playtimeManager.addPlaytime(player.getUniqueId(), 1);
         }

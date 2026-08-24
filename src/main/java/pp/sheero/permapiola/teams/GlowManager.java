@@ -34,17 +34,20 @@ public class GlowManager {
 
                     if (!TeamManager.hasGlowEnabled(observer)) return;
 
-                    PacketContainer packet = event.getPacket();
-                    Entity entity = packet.getEntityModifier(observer.getWorld()).readSafely(0);
+                    PacketContainer originalPacket = event.getPacket();
+                    Entity entity = originalPacket.getEntityModifier(observer.getWorld()).readSafely(0);
 
                     if (!(entity instanceof Player)) return;
                     Player target = (Player) entity;
 
                     if (observer.equals(target)) return;
+
                     org.bukkit.scoreboard.Team observerTeam = TeamManager.getTeam(observer);
                     if (observerTeam == null || !observerTeam.hasEntry(target.getName())) return;
 
-                    List<WrappedDataValue> dataValues = packet.getDataValueCollectionModifier().readSafely(0);
+                    PacketContainer clonedPacket = originalPacket.deepClone();
+
+                    List<WrappedDataValue> dataValues = clonedPacket.getDataValueCollectionModifier().readSafely(0);
                     if (dataValues == null) return;
 
                     List<WrappedDataValue> newDataValues = new ArrayList<>();
@@ -65,7 +68,9 @@ public class GlowManager {
                         newDataValues.add(new WrappedDataValue(0, WrappedDataWatcher.Registry.get(Byte.class), (byte) 0x40));
                     }
 
-                    packet.getDataValueCollectionModifier().write(0, newDataValues);
+                    clonedPacket.getDataValueCollectionModifier().write(0, newDataValues);
+
+                    event.setPacket(clonedPacket);
                 }
             });
         });

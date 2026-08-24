@@ -15,8 +15,11 @@ import org.bukkit.event.world.TimeSkipEvent;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
+import pp.sheero.permapiola.utils.TimeUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HurricaneManager implements Listener {
 
@@ -29,7 +32,7 @@ public class HurricaneManager implements Listener {
     private int taskId = -1;
 
     private final File dataFile;
-    private long durationHoursCache;
+    private long durationSecondsCache;
 
     public HurricaneManager(PermaPiola plugin, LanguageManager lang) {
         this.plugin = plugin;
@@ -52,7 +55,45 @@ public class HurricaneManager implements Listener {
     }
 
     public void loadConfigCache() {
-        this.durationHoursCache = plugin.getConfig().getLong("hurricane.duration-hours", 1);
+        String durationStr = plugin.getConfig().getString("hurricane.duration", "1h");
+        this.durationSecondsCache = TimeUtils.parseTimeString(durationStr);
+        if(this.durationSecondsCache <= 0) this.durationSecondsCache = 3600; // Por seguridad
+    }
+
+    public long getDurationSecondsCache() {
+        return durationSecondsCache;
+    }
+
+    public void setDefaultDuration(String rawTime, long totalSeconds) {
+        this.durationSecondsCache = totalSeconds;
+        plugin.getConfig().set("hurricane.duration", rawTime);
+        plugin.saveConfig();
+    }
+
+    public String getFormattedDuration(long totalSeconds, org.bukkit.command.CommandSender sender) {
+        long h = totalSeconds / 3600;
+        long m = (totalSeconds % 3600) / 60;
+        long s = totalSeconds % 60;
+
+        List<String> parts = new ArrayList<>();
+
+        if (h > 0) {
+            String word = h == 1 ? lang.getMsg(sender, "hurricane.time-words.hour") : lang.getMsg(sender, "hurricane.time-words.hours");
+            parts.add(h + " " + word);
+        }
+        if (m > 0) {
+            String word = m == 1 ? lang.getMsg(sender, "hurricane.time-words.minute") : lang.getMsg(sender, "hurricane.time-words.minutes");
+            parts.add(m + " " + word);
+        }
+        if (s > 0 || (h == 0 && m == 0)) {
+            String word = s == 1 ? lang.getMsg(sender, "hurricane.time-words.second") : lang.getMsg(sender, "hurricane.time-words.seconds");
+            parts.add(s + " " + word);
+        }
+
+        if (parts.size() == 1) return parts.get(0);
+        if (parts.size() == 2) return parts.get(0) + " " + lang.getMsg(sender, "hurricane.time-words.and") + " " + parts.get(1);
+
+        return parts.get(0) + ", " + parts.get(1) + " " + lang.getMsg(sender, "hurricane.time-words.and") + " " + parts.get(2);
     }
 
     public boolean isActive() {
@@ -64,8 +105,7 @@ public class HurricaneManager implements Listener {
     }
 
     public void addHurricaneTime() {
-        long durationHours = this.durationHoursCache;
-        long durationSeconds = durationHours * 3600;
+        long durationSeconds = this.durationSecondsCache;
 
         if (!active) {
             active = true;

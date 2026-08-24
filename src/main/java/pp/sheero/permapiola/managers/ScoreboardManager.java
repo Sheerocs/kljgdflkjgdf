@@ -28,7 +28,6 @@ public class ScoreboardManager implements Listener {
     private final Map<UUID, FastBoard> boards = new ConcurrentHashMap<>();
     private final Set<UUID> disabledPlayers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    // CAMBIO: Ahora usamos legacySection() para poder leer los colores ya formateados por tu ColorUtils
     private static final LegacyComponentSerializer SECTION = LegacyComponentSerializer.legacySection();
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
@@ -54,9 +53,14 @@ public class ScoreboardManager implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        if (isEnabled(e.getPlayer().getUniqueId())) {
-            addBoard(e.getPlayer());
-        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Player player = e.getPlayer();
+            if (player != null && player.isOnline()) {
+                if (isEnabled(player.getUniqueId())) {
+                    addBoard(player);
+                }
+            }
+        }, 10L);
     }
 
     @EventHandler
@@ -69,12 +73,25 @@ public class ScoreboardManager implements Listener {
         if (disabledPlayers.contains(uuid)) {
             disabledPlayers.remove(uuid);
             addBoard(player);
-            // Pasamos el mensaje por ColorUtils.format antes de deserializar
             player.sendMessage(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "commands.scoreboard.enabled"))));
         } else {
             disabledPlayers.add(uuid);
             removeBoard(player);
-            // Pasamos el mensaje por ColorUtils.format antes de deserializar
+            player.sendMessage(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "commands.scoreboard.disabled"))));
+        }
+    }
+
+    public void setScoreboardState(Player player, boolean enable) {
+        UUID uuid = player.getUniqueId();
+
+        if (enable && disabledPlayers.contains(uuid)) {
+            disabledPlayers.remove(uuid);
+            addBoard(player);
+            player.sendMessage(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "commands.scoreboard.enabled"))));
+
+        } else if (!enable && !disabledPlayers.contains(uuid)) {
+            disabledPlayers.add(uuid);
+            removeBoard(player);
             player.sendMessage(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "commands.scoreboard.disabled"))));
         }
     }
@@ -107,6 +124,21 @@ public class ScoreboardManager implements Listener {
     public void addBoard(Player player) {
         FastBoard board = new FastBoard(player);
         boards.put(player.getUniqueId(), board);
+
+        org.bukkit.scoreboard.Scoreboard sb = player.getScoreboard();
+
+        if (sb.getObjective("tabHealth") == null) {
+            org.bukkit.scoreboard.Objective tabHealth = sb.registerNewObjective("tabHealth", org.bukkit.scoreboard.Criteria.HEALTH, Component.empty());
+            tabHealth.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.PLAYER_LIST);
+            tabHealth.setRenderType(org.bukkit.scoreboard.RenderType.HEARTS);
+        }
+
+        if (sb.getObjective("nameHealth") == null) {
+            org.bukkit.scoreboard.Objective nameHealth = sb.registerNewObjective("nameHealth", org.bukkit.scoreboard.Criteria.HEALTH, Component.text("❤").color(net.kyori.adventure.text.format.NamedTextColor.RED));
+            nameHealth.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.BELOW_NAME);
+            nameHealth.setRenderType(org.bukkit.scoreboard.RenderType.HEARTS);
+        }
+
         updateBoard(player, board);
     }
 
@@ -137,7 +169,6 @@ public class ScoreboardManager implements Listener {
         Team playerTeam = TeamManager.getTeam(player);
         String teamName = (playerTeam != null) ? PLAIN.serialize(playerTeam.displayName()) : "";
 
-        // CAMBIO: Título pasado por ColorUtils
         board.updateTitle(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "scoreboard.title"))));
 
         List<String> configLines = lang.getMsgList(player, "scoreboard.lines");
@@ -156,7 +187,6 @@ public class ScoreboardManager implements Listener {
 
                             String pColor = getPingHexColor(ping);
 
-                            // CAMBIO: Pasado por ColorUtils
                             lines.add(SECTION.deserialize(ColorUtils.format(memberFormat
                                     .replace("%arrow%", getDirectionArrow(player, tm))
                                     .replace("%player%", tm.getName())
@@ -178,7 +208,6 @@ public class ScoreboardManager implements Listener {
                 }
 
                 if (!activeEventNames.isEmpty()) {
-                    // CAMBIO: Pasado por ColorUtils
                     lines.add(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "scoreboard.event-header"))));
 
                     String formatDouble = lang.getMsg(player, "scoreboard.event-format-double");
@@ -200,7 +229,6 @@ public class ScoreboardManager implements Listener {
 
             if (configLine.contains("%team%") && playerTeam == null) continue;
 
-            // CAMBIO: Pasado por ColorUtils
             lines.add(SECTION.deserialize(ColorUtils.format(configLine
                     .replace("%day%", day)
                     .replace("%rank%", rankStr)
@@ -212,9 +240,22 @@ public class ScoreboardManager implements Listener {
     }
 
     private String getLuckPermsRank(Player player) {
-        if (!LuckPermsUtils.hasSpecialRank(player)) return "&cVivo";
+        try {
+            net.luckperms.api.LuckPerms api = net.luckperms.api.LuckPermsProvider.get();
+            net.luckperms.api.model.user.User user = api.getUserManager().getUser(player.getUniqueId());
+
+            if (user != null) {
+                String groupName = user.getPrimaryGroup();
+                net.luckperms.api.model.group.Group group = api.getGroupManager().getGroup(groupName);
+
+                if (group != null && group.getDisplayName() != null && !group.getDisplayName().trim().isEmpty()) {
+                    return group.getDisplayName();
+                }
+            }
+        } catch (Exception ignored) {}
+
         String prefix = LuckPermsUtils.getPrefix(player);
-        return (prefix != null && !prefix.trim().isEmpty() && !prefix.trim().equals("&7")) ? prefix : "&cVivo";
+        return (prefix != null && !prefix.trim().isEmpty() && !prefix.trim().equals("&7")) ? prefix : "";
     }
 
     private String getPingHexColor(int latency) {
@@ -230,7 +271,6 @@ public class ScoreboardManager implements Listener {
 
         int argb = hsbToArgb(hue, 0.85F, 1.0F);
 
-        // CAMBIO: Le quité el "&" para que devuelva solo #RRGGBB y tu ColorUtils lo detecte correctamente
         return String.format("#%06X", (argb & 0xFFFFFF));
     }
 

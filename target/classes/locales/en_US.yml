@@ -11,33 +11,48 @@ hurricane:
     spectator-title: "&7&o..."
     spectator-subtitle: "&b&oNow you are a soul"
     kick-reason: "&8&oYour soul has faded away..."
-    hurricane-start: "#d11d41PermaPiola &8&l>> #c41a36The #ab1a07Death Hurricane #c41a36starts with a duration of 1 hour!"
+    hurricane-start: "#d11d41PermaPiola &8&l>> #c41a36The #ab1a07Death Hurricane #c41a36starts with a duration of %duration%!"
     hurricane-end: "#d11d41PermaPiola &8&l>> #93c47dThe #ab1a07Death Hurricane #93c47dhas ended!"
-    hurricane-added: "#d11d41PermaPiola &8&l>> #c41a36¡%time% hour(s) have been added to the #ab1a07Death Hurricane#c41a36!"
+    hurricane-added: "#d11d41PermaPiola &8&l>> #c41a36%duration% have been added to the #ab1a07Death Hurricane#c41a36!"
     staff-chat-death: "&4[StaffChat] &f%cause%"
+
+    time-words:
+      hours: "hours"
+      hour: "hour"
+      minutes: "minutes"
+      minute: "minute"
+      seconds: "seconds"
+      second: "second"
+      and: "and"
 
   bossbar:
     title: "&8☠ &8[&c%time%&8] &7of #ab1a07Death Hurricane &8☠"
 
-  commands:
-    usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /hurricane <enable|disable|edit>"
-    usage-edit: "#d11d41PermaPiola &8&l>> #c41a36Usage: /hurricane edit <add|remove|set> <1h2m3s>"
-    invalid-time-format: "#d11d41PermaPiola &8&l>> #c41a36Invalid time format. Use for example: 1h30m, 45m, or 1h2m3s."
-    cannot-remove-all: "#d11d41PermaPiola &8&l>> #c41a36You cannot remove that much time. The Hurricane must have at least 1 second remaining."
-    enabled: "#d11d41PermaPiola &8&l>> #93c47dThe Death Hurricane has been manually activated!"
-    already-enabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is already active."
-    disabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane has been deactivated!"
-    already-disabled: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is not active at this time."
-    invalid-number: "#d11d41PermaPiola &8&l>> #c41a36The amount must be a valid integer."
-    invalid-unit: "#d11d41PermaPiola &8&l>> #c41a36Invalid time unit. Use 's', 'm' or 'h'."
-    time-added: "#d11d41PermaPiola &8&l>> #93c47d%time% were added to the Death Hurricane."
-    time-removed: "#d11d41PermaPiola &8&l>> #c41a36%time% were removed from the Death Hurricane."
-    time-set: "#d11d41PermaPiola &8&l>> #ffd966The Death Hurricane time was set to %time%."
-    broadcast-added: "#d11d41PermaPiola &8&l>> #93c47d%player% added %time% to the Death Hurricane."
-    broadcast-removed: "#d11d41PermaPiola &8&l>> #c41a36%player% removed %time% from the Death Hurricane."
-    broadcast-set: "#d11d41PermaPiola &8&l>> #ffd966%player% set the Death Hurricane time to %time%."
-    debug-active: "#d11d41PermaPiola &8&l>> #93c47dDebug: The Hurricane is ACTIVE."
-    debug-inactive: "#d11d41PermaPiola &8&l>> #c41a36Debug: The Hurricane is DEACTIVATED."
+  death-message:
+    not-set: "#d11d41PermaPiola &8&l>> #c41a36You have not set a death message yet. Use /deathmessage <message>."
+    current: "#d11d41PermaPiola &8&l>> #f2cc24Your current death message is: &f%message%"
+    invalid-chars: "#d11d41PermaPiola &8&l>> #c41a36Your message contains invalid characters. Only letters, numbers, and basic punctuation are allowed."
+    set-success: "#d11d41PermaPiola &8&l>> #18f523Death message successfully saved: &f%message%"
+    broadcast: "#d11d41PermaPiola &8&l>> #c41a36Last words of %player%: &7%message%"
+
+  usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /hurricane <start|stop|time> [add|remove|set] [time]"
+  start: "#d11d41PermaPiola &8&l>> #93c47dThe Death Hurricane has been manually started."
+  stop: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane has been stopped."
+  already-active: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is already active."
+  not-active: "#d11d41PermaPiola &8&l>> #c41a36The Death Hurricane is not currently active."
+  invalid-time: "#d11d41PermaPiola &8&l>> #c41a36Invalid time format. Use for example: 1h30m, 45m, or 1h2m3s."
+  time-added: "#d11d41PermaPiola &8&l>> #93c47dAdded %time% to the Death Hurricane."
+  time-removed: "#d11d41PermaPiola &8&l>> #c41a36Removed %time% from the Death Hurricane."
+  time-set: "#d11d41PermaPiola &8&l>> #ffd966The Death Hurricane time was set to %time%."
+  staff-alert-start: "&8[&bHurricane&8] &f%admin% &7has started the Death Hurricane."
+  staff-alert-stop: "&8[&bHurricane&8] &f%admin% &7has stopped the Death Hurricane."
+  staff-alert-time: "&8[&bHurricane&8] &f%admin% &7has %action% &f%time% &7to the Death Hurricane time."
+  word-added: "added"
+  word-removed: "removed"
+  word-set: "set"
+  duration-set: "#d11d41PermaPiola &8&l>> #18f523The default Hurricane duration was set to %time%."
+  duration-already-set: "#d11d41PermaPiola &8&l>> #c41a36The Hurricane duration is already set to that amount."
+  staff-alert-duration: "&8[&bHurricane&8] &f%admin% &7has set the default duration to &f%time%&7."
 
 # ============================================================= #
 #                        DEMENTIAL WHEEL                        #
@@ -51,12 +66,16 @@ demential-wheel:
   death-messages:
     acid-rain: "%player% died due to acid corrosion"
   events:
-    totem_drop: "#990000Demential Wheel &8&l>> #c41a36Totem Drop: 10%% chance to consume double totems."
-    putrified_water: "#990000Demential Wheel &8&l>> #c41a36Putrified Water: Touching water gives you Wither 1."
+    totem_drop: "#990000Demential Wheel &8&l>> #c41a36Totem Drop: %chance%% chance to consume double totems."
+    putrified_water: "#990000Demential Wheel &8&l>> #c41a36Putrified Water: Touching water gives you Wither %level%."
     acid_rain: "#990000Demential Wheel &8&l>> #c41a36Acid Rain: Acid rain and contaminated water. Avoid getting wet!"
-    life_erosion: "#990000Demential Wheel &8&l>> #c41a36Life Erosion: You permanently lose a heart slot."
-    toxic_air: "#990000Demential Wheel &8&l>> #c41a36Toxic Air: Being above layer 40 prevents your regeneration."
-    broken_gear: "#990000Demential Wheel &8&l>> #c41a36Broken Gear: Your armor and tools wear out 50%% faster."
+    life_erosion: "#990000Demential Wheel &8&l>> #c41a36Life Erosion: You permanently lose %hearts% %slot_word%."
+    toxic_air: "#990000Demential Wheel &8&l>> #c41a36Toxic Air: Being above layer %layer% prevents your regeneration."
+    broken_gear: "#990000Demential Wheel &8&l>> #c41a36Broken Gear: Your armor and tools wear out %chance%% faster."
+
+    words:
+      slot-singular: "heart slot"
+      slot-plural: "heart slots"
 
 # ============================================================= #
 #                           PLAYTIME                            #
@@ -69,11 +88,11 @@ playtime:
   usage-admin-set: "&cUsage: /pt admin set <player> <time>\n&7Example: /pt admin set Notch 1h30m"
   usage-admin-reset: "&cUsage: /pt admin reset <player>"
 
-  self: "&cYour Playtime\n&8&l-> &7Playtime: &f%time%"
-  other-player: "&cPlaytime of %player%\n&8&l-> &7Playtime: &f%time%"
-  other-team: "&cPlaytime of Team %team%\n&8&l-> &7Total Playtime: &f%time%"
+  self: "&cYour Playtime\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Playtime: &f%time%"
+  other-player: "&c%player%&c's Playtime\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Playtime: &f%time%"
+  other-team: "&cTeam %team% &cPlaytime\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Total Playtime: &f%time%"
   team-not-found: "&cThe specified team does not exist!"
-  team-member-format: "&8&l-> &7%player%: &f%time%"
+  team-member-format: "&8&l-> &7%player%&f: %time%"
 
   top-header: "&7Leaderboard (Players)"
   top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%time%"
@@ -117,6 +136,7 @@ teams:
       - "&c /team invite <player> &f- &rInvite a player!"
       - "&c /team accept <player> &f- &rAccept an invitation"
       - "&c /team leave &f- &rLeave your current team"
+      - "&c /team location &f- &rSend your coordinates to the team"
       - "&c /team memberlist &f- &rShow your team members"
       - "&c /team glow [on|off] &f- &rToggle team glow"
     staff:
@@ -246,16 +266,16 @@ totems:
   usage-admin-set: "#ed2d2dUsage: /totem admin set <player> <amount>\n&7Example: /totem admin set Notch 10"
   usage-admin-reset: "#ed2d2dUsage: /totem admin reset <player>"
 
-  self: "#ed2d2dTotems used by you\n&8&l-> &7Totems used: &f%totems%"
-  other-player: "#ed2d2dTotems used by %player%\n&8&l-> &7Totems used: &f%totems%"
-  other-team: "#ed2d2dTotems of team %team%\n&8&l-> &7Total totems: &f%totems%"
+  self: "&cYour Used Totems\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Totems: &f%totems%"
+  other-player: "&c%player%&c's Used Totems\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Totems: &f%totems%"
+  other-team: "&cTeam %team% &cUsed Totems\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Total: &f%totems%"
   team-not-found: "#ed2d2dThe specified team does not exist!"
-  team-member-format: "&8&l-> &7%player%: &f%totems%"
+  team-member-format: "&8&l-> &7%player%&f: %totems%"
 
-  top-header: "&7Leaderboard (Players)"
+  top-header: "&7Leaderboard"
   top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%totems%"
 
-  topteams-header: "&7Leaderboard (Teams)"
+  topteams-header: "&7Leaderboard"
   topteams-format: "&8&l-> &c#%pos%&c. &7%team% &8- &f%totems%"
 
   sound-mode-success: "#18f523Sound preference changed to: #f2cc24%mode%"
@@ -317,19 +337,19 @@ totems:
 #                            UTILIDAD                           #
 # ============================================================= #
 join:
-  donator: "%player_prefix%%player%%player_suffix% &ejoined the game"
-  default: "&7%player% &ejoined the game"
+  donator: "&a[+] %player_prefix%%player%"
+  default: "&a[+] %player%"
 quit:
-  donator: "%player_prefix%%player%%player_suffix% &eleft the game"
-  default: "&7%player% &eleft the game"
+  donator: "&c[-] %player_prefix%%player%"
+  default: "&c[-] %player%"
 
 private:
   format-to:
-    donator: "&dTo %target_prefix%%target%%target_suffix%&7: &f%message%"
-    default: "&dTo %target_prefix%%target%%target_suffix%&7: &7%message%"
+    donator: "&dTo %target_prefix%%target%%target_suffix%&f: %message%"
+    default: "&dTo %target_prefix%%target%%target_suffix%&7: %message%"
   format-from:
-    donator: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: &f%message%"
-    default: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: &7%message%"
+    donator: "&dFrom %sender_prefix%%sender%%sender_suffix%&f: %message%"
+    default: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: %message%"
 
 scoreboard:
   title: "&4☠ #ed2d2d&lPermaPiola 2 T6 &4☠"
@@ -355,7 +375,7 @@ alerts:
 
 combatlog:
   staff:
-    header: "&8[&4❌&8] #eb3c2d¡<##7e0810>%player% #eb3c2dtried to combatlog! &8&l| #b30024>Health: #f30611%health% 💔"
+    header: "&8[&4❌&8] #eb3c2d¡#7e0810%player% #eb3c2dtried to combatlog! &8&l| #b30024Health: #f30611%health% 💔"
     mobs: "&8[&4❌&8] #b30024Mobs around: #f30611%n%"
     last-damage: "&8[&4❌&8] #b30024Last Damage: #f30611%cause%"
     reason: "&8[&4❌&8] #b30024Leave reason: #f30611%reason%"
@@ -363,6 +383,7 @@ combatlog:
 
 inactivity:
   death-message: "%player% died from inactivity"
+  safe-message: "#32CD32[PermaPiola] You have reached the required playtime! Your inactivity time has been reset."
 
 commands:
   generic:
@@ -391,8 +412,9 @@ commands:
   revive:
     usage: "#ed2d2dUsage: /revive <player>"
     not-dead: "#ed2d2dThat player is not dead."
+    player-offline: "#ed2d2dThat player is offline or does not exist. They must be online to be revived."
     success: "#18f523You have successfully revived %player%."
-    staff-alert: "&8[&aRevive&8] &fAdministrator %admin% &7has revived &f%player%&7."
+    staff-alert: "&8[&aRevive&8] &7Administrator &f%admin% &7has revived &f%player%&7."
 
   teamchat:
     usage: "#ed2d2dUsage: /tc <message>"
@@ -429,6 +451,7 @@ commands:
     changed-all: "#18f523You switched to Global chat."
     changed-staff: "#18f523You switched to Staff chat."
     changed-team: "#18f523You switched to your Team chat."
+    changed-spec: "#18f523You switched to Spectator chat."
 
   playerip:
     usage: "#ed2d2dUsage: /playerip <player>"
@@ -442,8 +465,8 @@ commands:
     reload-file: "#18f523[PermaPiola] The file &e%file% #18f523has been successfully reloaded!"
 
   inventory:
-    usage: "#ed2d2dUsage: /inv <argument> [player]\n#ed2d2dValid arguments: see, death"
-    invalid-argument: "#ed2d2dInvalid argument. Valid arguments: see, death"
+    usage: "#ed2d2dUsage: /inv <argument> [player]\n#ed2d2dValid arguments: see, grave"
+    invalid-argument: "#ed2d2dInvalid argument. Valid arguments: see, grave"
     see-self: "#ed2d2dYou cannot open your own inventory with this command."
     gui-title: "Inventory of %player%"
     give-no-inventory: "#ed2d2dThat player does not have a saved inventory."
@@ -451,6 +474,14 @@ commands:
     death-locked: "#ed2d2dCareful! Another administrator is already editing this player's grave."
     death-saved: "#18f523Grave changes have been successfully saved!"
     death-gui-title: "&8Grave of %player%"
+    audit:
+      header: "&8[&cAudit&8] &7Changes by &c%admin% &7in &c%target%'s &7grave:"
+      added: "&a+ Added &f%amount%x %item% &ain slot &f%slot%"
+      removed: "&c- Removed &f%amount%x %item% &cfrom slot &f%slot%"
+      moved: "&e~ Moved &f%amount%x %item% &efrom slot &f%old_slot% &eto position &f%new_slot%"
+      swapped: "&e~ Swapped &f%amount1%x %item1% &e(slot %slot1%) with &f%amount2%x %item2% &e(slot %slot2%)"
+      replaced: "&e~ Replaced &f%old_amount%x %old_item% &ewith &f%amount%x %item% &ein slot &f%slot%"
+      amount_changed: "&e~ Changed amount of &f%item% &ein slot &f%slot%&e: from &f%old_amount% &eto &f%amount%"
 
   helpop:
     usage: "#ed2d2dUsage: /helpop <message>"
@@ -466,13 +497,18 @@ commands:
 
   dementialwheel:
     no-permission: "#c41a36You do not have permission to execute this command."
-    usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /dementialwheel <enable|disable> [event]"
-    disabled-all: "#d11d41PermaPiola &8&l>> #c41a36All Demential Wheel events have been deactivated."
-    enabled-all-events: "#d11d41PermaPiola &8&l>> #93c47dALL Demential Wheel events have been activated!"
-    force-enabled: "#d11d41PermaPiola &8&l>> #a4c2f4Event forcefully activated on event: #ffd966%event%"
-    invalid-event: "#d11d41PermaPiola &8&l>> #c41a36Invalid event. Use autocomplete to see available events."
+    usage: "#d11d41PermaPiola &8&l>> #c41a36Usage: /dementialwheel <start|stop|force|disable> [event]"
+    start: "#d11d41PermaPiola &8&l>> #93c47dDemential Wheel sequence started manually."
+    stop: "#d11d41PermaPiola &8&l>> #c41a36Demential Wheel has been stopped and events cleared."
+    force-enabled: "#d11d41PermaPiola &8&l>> #a4c2f4You have forcibly enabled: #ffd966%event%"
+    force-disabled: "#d11d41PermaPiola &8&l>> #c41a36Event disabled: #ffd966%event%"
+    invalid-event: "#d11d41PermaPiola &8&l>> #c41a36Invalid event. Use tab-completion to see available events."
     already-active: "#d11d41PermaPiola &8&l>> #c41a36That event is already active."
-    all-events-already-active: "#d11d41PermaPiola &8&l>> #c41a36All events are already activated!"
-    no-events-active: "#d11d41PermaPiola &8&l>> #c41a36There is no active event on the Demential Wheel."
     event-not-active: "#d11d41PermaPiola &8&l>> #c41a36That event is not currently active."
-    force-disabled: "#d11d41PermaPiola &8&l>> #c41a36The event has been deactivated: #ffd966%event%"
+    broadcast-force: "#d11d41PermaPiola &8&l>> #a4c2f4The event #ffd966%event% #a4c2f4has been activated!"
+    staff-alert-start: "&8[&cDementialWheel&8] &f%admin% &7has started the wheel manually."
+    staff-alert-stop: "&8[&cDementialWheel&8] &f%admin% &7has stopped the wheel."
+    staff-alert-force: "&8[&cDementialWheel&8] &f%admin% &7has forced the event: &f%event%"
+    staff-alert-disable: "&8[&cDementialWheel&8] &f%admin% &7has disabled the event: &f%event%"
+    already-rolling: "#d11d41PermaPiola &8&l>> #c41a36The wheel is already rolling or has active events."
+    no-events-active: "#d11d41PermaPiola &8&l>> #c41a36There are no active or rolling events."

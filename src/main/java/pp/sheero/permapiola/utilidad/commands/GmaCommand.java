@@ -1,67 +1,78 @@
 package pp.sheero.permapiola.utilidad.commands;
 
-import org.bukkit.Bukkit;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.managers.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.ParticleUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class GmaCommand implements CommandExecutor, TabCompleter {
-    private final LanguageManager lang;
-    public GmaCommand(LanguageManager lang) { this.lang = lang; }
+public class GmaCommand {
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("permapiola.admin.gamemode.adventure")) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.no-permission")));
-            return true;
-        }
+    public static void register(Commands commands, LanguageManager lang) {
+        var gmaNode = Commands.literal("gma")
+                .requires(source -> source.getSender().hasPermission("permapiola.admin.gamemode.adventure"))
 
-        Player targetPlayer;
-        if (args.length >= 1) {
-            targetPlayer = Bukkit.getPlayerExact(args[0]);
-            if (targetPlayer == null) {
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
-                return true;
-            }
-        } else {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
-                return true;
-            }
-            targetPlayer = (Player) sender;
-        }
+                .executes(context -> {
+                    CommandSender sender = context.getSource().getSender();
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.console-only")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    applyGamemode((Player) sender, sender, true);
+                    return Command.SINGLE_SUCCESS;
+                })
 
-        if (targetPlayer.getGameMode() == GameMode.ADVENTURE) return true;
+                .then(Commands.argument("target", ArgumentTypes.players())
+                        .executes(context -> {
+                            CommandSender sender = context.getSource().getSender();
+                            PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
+
+                            try {
+                                List<Player> targets = resolver.resolve(context.getSource());
+
+                                if (targets.isEmpty()) {
+                                    sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                                    return Command.SINGLE_SUCCESS;
+                                }
+
+                                for (Player targetPlayer : targets) {
+                                    boolean isSelf = targetPlayer.equals(sender);
+                                    applyGamemode(targetPlayer, sender, isSelf);
+                                }
+
+                            } catch (CommandSyntaxException e) {
+                                sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
+
+        commands.register(gmaNode.build());
+    }
+
+    private static void applyGamemode(Player targetPlayer, CommandSender sender, boolean isSelf) {
+        if (targetPlayer.getGameMode() == GameMode.ADVENTURE) return;
 
         targetPlayer.setGameMode(GameMode.ADVENTURE);
         ParticleUtils.spawnGamemodeParticles(targetPlayer, GameMode.ADVENTURE);
 
-        if (targetPlayer.equals(sender)) {
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.self").replace("%mode%", lang.getMsg(sender, "commands.gamemode.names.adventure"))));
-        } else {
-            targetPlayer.sendMessage(ColorUtils.format(lang.getMsg(targetPlayer, "commands.gamemode.other-target").replace("%mode%", lang.getMsg(targetPlayer, "commands.gamemode.names.adventure"))));
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.gamemode.other-sender").replace("%player%", targetPlayer.getName()).replace("%mode%", lang.getMsg(sender, "commands.gamemode.names.adventure"))));
-        }
-        return true;
-    }
+        Component translatedMode = Component.translatable("gameMode.adventure");
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (sender.hasPermission("permapiola.admin.gamemode.adventure") && args.length == 1) {
-            Bukkit.getOnlinePlayers().forEach(p -> {
-                if (p.getName().toLowerCase().startsWith(args[0].toLowerCase())) completions.add(p.getName());
-            });
+        if (isSelf) {
+            sender.sendMessage(Component.translatable("commands.gamemode.success.self", translatedMode));
+        } else {
+            sender.sendMessage(Component.translatable("commands.gamemode.success.other", targetPlayer.displayName(), translatedMode));
+            targetPlayer.sendMessage(Component.translatable("gameMode.changed", translatedMode));
         }
-        return completions;
     }
 }

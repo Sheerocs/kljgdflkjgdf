@@ -11,52 +11,71 @@ hurricane:
     spectator-title: "&7&o..."
     spectator-subtitle: "&b&oAhora eres un alma"
     kick-reason: "&8&oTu alma se ha desvanecido..."
-    hurricane-start: "#d11d41PermaPiola &8&l>> #c41a36¡Comienza el #ab1a07Death Hurracain #c41a36con duración de 1 hora!"
+    hurricane-start: "#d11d41PermaPiola &8&l>> #c41a36¡Comienza el #ab1a07Death Hurricane #c41a36con duración de %duration%!"
     hurricane-end: "#d11d41PermaPiola &8&l>> #93c47d¡El #ab1a07Death Hurricane #93c47dha terminado!"
-    hurricane-added: "#d11d41PermaPiola &8&l>> #c41a36¡Se han sumado %time% hora(s) al #ab1a07Death Hurricane#c41a36!"
+    hurricane-added: "#d11d41PermaPiola &8&l>> #c41a36¡Se ha sumado %duration% al #ab1a07Death Hurricane#c41a36!"
     staff-chat-death: "&4[StaffChat] &f%cause%"
+
+  time-words:
+    hours: "horas"
+    hour: "hora"
+    minutes: "minutos"
+    minute: "minuto"
+    seconds: "segundos"
+    second: "segundo"
+    and: "y"
 
   bossbar:
     title: "&8☠ &8[&c%time%&8] &7de #ab1a07Death Hurricane &8☠"
 
-  commands:
-    usage: "#d11d41PermaPiola &8&l>> #c41a36Uso: /hurricane <enable|disable|edit>"
-    usage-edit: "#d11d41PermaPiola &8&l>> #c41a36Uso: /hurricane edit <add|remove|set> <1h2m3s>"
-    invalid-time-format: "#d11d41PermaPiola &8&l>> #c41a36Formato de tiempo inválido. Usa por ejemplo: 1h30m, 45m, o 1h2m3s."
-    cannot-remove-all: "#d11d41PermaPiola &8&l>> #c41a36No puedes remover tanto tiempo. El Hurricane debe quedar con al menos 1 segundo restante."
-    enabled: "#d11d41PermaPiola &8&l>> #93c47d¡El Death Hurricane ha sido activado manualmente!"
-    already-enabled: "#d11d41PermaPiola &8&l>> #c41a36El Death Hurricane ya está activo."
-    disabled: "#d11d41PermaPiola &8&l>> #c41a36¡El Death Hurricane ha sido desactivado!"
-    already-disabled: "#d11d41PermaPiola &8&l>> #c41a36El Death Hurricane no está activo en este momento."
-    invalid-number: "#d11d41PermaPiola &8&l>> #c41a36La cantidad debe ser un número entero válido."
-    invalid-unit: "#d11d41PermaPiola &8&l>> #c41a36Unidad de tiempo inválida. Usa 's', 'm' o 'h'."
-    time-added: "#d11d41PermaPiola &8&l>> #93c47dSe añadieron %time% al Death Hurricane."
-    time-removed: "#d11d41PermaPiola &8&l>> #c41a36Se removieron %time% del Death Hurricane."
-    time-set: "#d11d41PermaPiola &8&l>> #ffd966El tiempo del Death Hurricane se estableció en %time%."
-    broadcast-added: "#d11d41PermaPiola &8&l>> #93c47d%player% añadió %time% al Death Hurricane."
-    broadcast-removed: "#d11d41PermaPiola &8&l>> #c41a36%player% removió %time% del Death Hurricane."
-    broadcast-set: "#d11d41PermaPiola &8&l>> #ffd966%player% estableció el tiempo del Death Hurricane en %time%."
-    debug-active: "#d11d41PermaPiola &8&l>> #93c47dDebug: El Hurricane está ACTIVO."
-    debug-inactive: "#d11d41PermaPiola &8&l>> #c41a36Debug: El Hurricane está DESACTIVADO."
+  death-message:
+    not-set: "#d11d41PermaPiola &8&l>> #c41a36Aún no has establecido un mensaje de muerte. Usa /deathmessage <mensaje>."
+    current: "#d11d41PermaPiola &8&l>> #f2cc24Tu mensaje de muerte actual es: &f%message%"
+    invalid-chars: "#d11d41PermaPiola &8&l>> #c41a36Tu mensaje contiene caracteres inválidos. Solo se permiten letras, números y signos básicos."
+    set-success: "#d11d41PermaPiola &8&l>> #18f523Mensaje de muerte guardado correctamente: &f%message%"
+    broadcast: "#d11d41PermaPiola &8&l>> #c41a36Últimas palabras de %player%: &7%message%"
+
+  usage: "#d11d41PermaPiola &8&l>> #c41a36Uso: /hurricane <start|stop|time> [add|remove|set] [tiempo]"
+  start: "#d11d41PermaPiola &8&l>> #93c47dEl Death Hurricane ha sido iniciado manualmente."
+  stop: "#d11d41PermaPiola &8&l>> #c41a36El Death Hurricane ha sido detenido."
+  already-active: "#d11d41PermaPiola &8&l>> #c41a36El Death Hurricane ya está activo."
+  not-active: "#d11d41PermaPiola &8&l>> #c41a36El Death Hurricane no está activo actualmente."
+  invalid-time: "#d11d41PermaPiola &8&l>> #c41a36Formato de tiempo inválido. Usa por ejemplo: 1h30m, 45m, o 1h2m3s."
+  time-added: "#d11d41PermaPiola &8&l>> #93c47dSe han añadido %time% al Death Hurricane."
+  time-removed: "#d11d41PermaPiola &8&l>> #c41a36Se han restado %time% al Death Hurricane."
+  time-set: "#d11d41PermaPiola &8&l>> #ffd966El tiempo del Death Hurricane se estableció en %time%."
+  staff-alert-start: "&8[&bHurricane&8] &f%admin% &7ha iniciado el Death Hurricane."
+  staff-alert-stop: "&8[&bHurricane&8] &f%admin% &7ha detenido el Death Hurricane."
+  staff-alert-time: "&8[&bHurricane&8] &f%admin% &7ha %action% &f%time% &7al tiempo del Death Hurricane."
+  word-added: "añadido"
+  word-removed: "restado"
+  word-set: "establecido"
+  duration-set: "#d11d41PermaPiola &8&l>> #18f523La duración por defecto del Hurricane se estableció en %time%."
+  duration-already-set: "#d11d41PermaPiola &8&l>> #c41a36La duración del Hurricane ya está configurada en esa cantidad."
+  staff-alert-duration: "&8[&bHurricane&8] &f%admin% &7ha establecido la duración por defecto en &f%time%&7."
 
 # ============================================================= #
 #                        DEMENTIAL WHEEL                        #
 # ============================================================= #
 demential-wheel:
-  event-ended: "#d11d41PermaPiola &8&l>> #93c47dEl evento #ffd966%event% #93c47dha terminado."
-  warning: "#d11d41PermaPiola &8&l>> #c41a36Un evento extraño se manifestará pronto..."
+  event-ended: "#990000Demential Wheel &8&l>> #93c47dEl evento #ffd966%event% #93c47dha terminado."
+  warning: "#990000Demential Wheel &8&l>> #c41a36Un evento extraño se manifestará pronto..."
   spin-3: "#990000Demential Wheel &8&l>> #c41a36Girará en 3"
   spin-2: "#990000Demential Wheel &8&l>> #c41a36Girará en 2"
   spin-1: "#990000Demential Wheel &8&l>> #c41a36Girará en 1"
   death-messages:
     acid-rain: "%player% murió por la corrosión del ácido"
   events:
-    totem_drop: "#990000Demential Wheel &8&l>> #c41a36Totem Drop: 10% de probabilidad de gastar el doble de tótems."
-    putrified_water: "#990000Demential Wheel &8&l>> #c41a36Putrified Water: Tocar agua te da Wither 1."
+    totem_drop: "#990000Demential Wheel &8&l>> #c41a36Totem Drop: %chance%% de probabilidad de gastar el doble de tótems."
+    putrified_water: "#990000Demential Wheel &8&l>> #c41a36Putrified Water: Tocar agua te da Wither %level%."
     acid_rain: "#990000Demential Wheel &8&l>> #c41a36Acid Rain: Lluvia ácida y agua contaminada. ¡Evita mojarte!"
-    life_erosion: "#990000Demential Wheel &8&l>> #c41a36Life Erosion: Pierdes un slot de corazón permanente."
-    toxic_air: "#990000Demential Wheel &8&l>> #c41a36Toxic Air: Estar arriba de la capa 40 impide tu regeneración."
-    broken_gear: "#990000Demential Wheel &8&l>> #c41a36Broken Gear: Tu armadura y herramientas se gastan un 50% más rápido."
+    life_erosion: "#990000Demential Wheel &8&l>> #c41a36Life Erosion: Pierdes %hearts% %slot_word%."
+    toxic_air: "#990000Demential Wheel &8&l>> #c41a36Toxic Air: Estar arriba de la capa %layer% impide tu regeneración."
+    broken_gear: "#990000Demential Wheel &8&l>> #c41a36Broken Gear: Tu armadura y herramientas se gastan un %chance%% más rápido."
+
+    words:
+      slot-singular: "slot de corazón permanente"
+      slot-plural: "slots de corazones permanentes"
 
 # ============================================================= #
 #                           PLAYTIME                            #
@@ -69,11 +88,11 @@ playtime:
   usage-admin-set: "&cUso: /pt admin set <jugador> <tiempo>\n&7Ejemplo: /pt admin set Notch 1h30m"
   usage-admin-reset: "&cUso: /pt admin reset <jugador>"
 
-  self: "&cTu Playtime\n&8&l-> &7Playtime: &f%time%"
-  other-player: "&cPlaytime de %player%\n&8&l-> &7Playtime: &f%time%"
-  other-team: "&cPlaytime del Equipo %team%\n&8&l-> &7Playtime Total: &f%time%"
+  self: "&cTu Playtime\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Playtime: &f%time%"
+  other-player: "&cPlaytime de %player%\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Playtime: &f%time%"
+  other-team: "&cPlaytime del Equipo %team%\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Playtime Total: &f%time%"
   team-not-found: "&c¡El equipo especificado no existe!"
-  team-member-format: "&8&l-> &7%player%: &f%time%"
+  team-member-format: "&8&l-> &7%player%&f: %time%"
 
   top-header: "&7Leaderboard (Jugadores)"
   top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%time%"
@@ -117,6 +136,7 @@ teams:
       - "&c /team invite <jugador> &f- &r¡Invita a un jugador!"
       - "&c /team accept <jugador> &f- &rAcepta una invitación"
       - "&c /team leave &f- &rDeja tu equipo actual"
+      - "&c /team location &f- &rManda tus coordenadas al equipo"
       - "&c /team memberlist &f- &rMuestra a los miembros de tu equipo"
       - "&c /team glow [on|off] &f- &rAlterna el brillo de equipo"
     staff:
@@ -215,7 +235,7 @@ teams:
     usage-forceleave: "#ed2d2d¡Uso incorrecto! Define a quién quieres expulsar.\n#f2cc24 Uso: /team forceleave [jugador]\n&7Ejemplo: /team forceleave Notch"
     forceleave-success: "#ed2d2dHas forzado a %player_prefix%%player%%player_suffix% #ed2d2da abandonar su equipo."
     forceleave-target: "#ed2d2dUn administrador te ha forzado a abandonar tu equipo."
-    forceleave-self: "#ed2d2dTe haz forzado a abandonar tu equipo."
+    forceleave-self: "#ed2d2dTe has forzado a abandonar tu equipo."
     forceleave-broadcast: "#f2cc24Un administrador ha sacado a %player_prefix%%player%%player_suffix% #f2cc24del equipo."
     forceleave-disbanded: "#ed2d2dUn administrador ha forzado la salida del líder. El equipo ha sido disuelto."
     forceleave-other-no-team: "%player_prefix%%player% #ed2d2dno está en ningún equipo."
@@ -246,16 +266,16 @@ totems:
   usage-admin-set: "#ed2d2dUso: /totem admin set <jugador> <cantidad>\n&7Ejemplo: /totem admin set Notch 10"
   usage-admin-reset: "#ed2d2dUso: /totem admin reset <jugador>"
 
-  self: "#ed2d2dTotems usados por ti\n&8&l-> &7Totems usados: &f%totems%"
-  other-player: "#ed2d2dTotems usados por %player%\n&8&l-> &7Totems usados: &f%totems%"
-  other-team: "#ed2d2dTotems del equipo %team%\n&8&l-> &7Totems totales: &f%totems%"
+  self: "&cTus Tótems Usados\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Tótems: &f%totems%"
+  other-player: "&cTótems Usados por %player%\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Tótems: &f%totems%"
+  other-team: "&cTótems Usados del Equipo %team%\n&8&l-> &7Posición: &c#%pos%\n&8&l-> &7Total: &f%totems%"
   team-not-found: "#ed2d2d¡El equipo especificado no existe!"
-  team-member-format: "&8&l-> &7%player%: &f%totems%"
+  team-member-format: "&8&l-> &7%player%&f: %totems%"
 
-  top-header: "&7Tabla de posicion (Jugadores)"
+  top-header: "&7Tabla de posicion"
   top-format: "&8&l-> &c#%pos%&c. &7%name% &8- &f%totems%"
 
-  topteams-header: "&7Tabla de posicion (Equipos)"
+  topteams-header: "&7Tabla de posicion"
   topteams-format: "&8&l-> &c#%pos%&c. &7%team% &8- &f%totems%"
 
   sound-mode-success: "#18f523Preferencia de sonido cambiada a: #f2cc24%mode%"
@@ -317,19 +337,19 @@ totems:
 #                            UTILIDAD                           #
 # ============================================================= #
 join:
-  donator: "%player_prefix%%player%%player_suffix% &ese unió a la partida"
-  default: "&7%player% &ese unió a la partida"
+  donator: "&a[+] %player_prefix%%player%"
+  default: "&a[+] %player%"
 quit:
-  donator: "%player_prefix%%player%%player_suffix% &eabandonó la partida"
-  default: "&7%player% &eabandonó la partida"
+  donator: "&c[-] %player_prefix%%player%"
+  default: "&c[-] %player%"
 
 private:
   format-to:
-    donator: "&dPara %target_prefix%%target%%target_suffix%&7: &f%message%"
-    default: "&dPara %target_prefix%%target%%target_suffix%&7: &7%message%"
+    donator: "&dPara %target_prefix%%target%%target_suffix%&f: %message%"
+    default: "&dPara %target_prefix%%target%%target_suffix%&7: %message%"
   format-from:
-    donator: "&dDe %sender_prefix%%sender%%sender_suffix%&7: &f%message%"
-    default: "&dDe %sender_prefix%%sender%%sender_suffix%&7: &7%message%"
+    donator: "&dDe %sender_prefix%%sender%%sender_suffix%&f: %message%"
+    default: "&dDe %sender_prefix%%sender%%sender_suffix%&7: %message%"
 
 scoreboard:
   title: "&4☠ #ed2d2d&lPermaPiola 2 T6 &4☠"
@@ -355,7 +375,7 @@ alerts:
 
 combatlog:
   staff:
-    header: "&8[&4❌&8] #eb3c2d¡<##7e0810>%player% #eb3c2dintentó hacer combatlog! &8&l| #b30024>Vida: #f30611%health% 💔"
+    header: "&8[&4❌&8] #eb3c2d¡#7e0810%player% #eb3c2dintentó hacer combatlog! &8&l| #b30024Vida: #f30611%health% 💔"
     mobs: "&8[&4❌&8] #b30024Mobs alrededor: #f30611%n%"
     last-damage: "&8[&4❌&8] #b30024Ultimo Daño: #f30611%cause%"
     reason: "&8[&4❌&8] #b30024Razón del leave: #f30611%reason%"
@@ -392,8 +412,9 @@ commands:
   revive:
     usage: "#ed2d2dUso: /revive <jugador>"
     not-dead: "#ed2d2dEse jugador no está muerto."
+    player-offline: "#ed2d2dEse jugador está desconectado o no existe. Para revivirlo, debe estar en línea."
     success: "#18f523Has revivido a %player% exitosamente."
-    staff-alert: "&8[&aRevive&8] &fEl administrador %admin% &7ha revivido a &f%player%&7."
+    staff-alert: "&8[&aRevive&8] &7El administrador &f%admin% &7ha revivido a &f%player%&7."
 
   teamchat:
     usage: "#ed2d2dUso: /tc <mensaje>"
@@ -430,6 +451,7 @@ commands:
     changed-all: "#18f523Te cambiaste al chat Global."
     changed-staff: "#18f523Te cambiaste al chat del Staff."
     changed-team: "#18f523Te cambiaste al chat de tu Equipo."
+    changed-spec: "#18f523Te cambiaste al chat de Espectadores."
 
   playerip:
     usage: "#ed2d2dUso: /playerip <jugador>"
@@ -443,8 +465,8 @@ commands:
     reload-file: "#18f523[PermaPiola] ¡El archivo &e%file% #18f523ha sido recargado con éxito!"
 
   inventory:
-    usage: "#ed2d2dUso: /inv <argumento> [jugador]\n#ed2d2dArgumentos válidos: see, death"
-    invalid-argument: "#ed2d2dArgumento no válido. Argumentos válidos: see, death"
+    usage: "#ed2d2dUso: /inv <argumento> [jugador]\n#ed2d2dArgumentos válidos: see, grave"
+    invalid-argument: "#ed2d2dArgumento no válido. Argumentos válidos: see, grave"
     see-self: "#ed2d2dNo puedes abrir tu propio inventario con este comando."
     gui-title: "Inventario de %player%"
     give-no-inventory: "#ed2d2dEse jugador no tiene un inventario guardado."
@@ -452,6 +474,14 @@ commands:
     death-locked: "#ed2d2d¡Cuidado! Otro administrador ya está editando la tumba de este jugador."
     death-saved: "#18f523¡Los cambios en la tumba han sido guardados exitosamente!"
     death-gui-title: "&8Tumba de %player%"
+    audit:
+      header: "&8[&cAuditoría&8] &7Cambios de &c%admin% &7en la tumba de &c%target%&7:"
+      added: "&a+ Añadió &f%amount%x %item% &aen el slot &f%slot%"
+      removed: "&c- Eliminó &f%amount%x %item% &cdel slot &f%slot%"
+      moved: "&e~ Movió &f%amount%x %item% &edel slot &f%old_slot% &ea la posición &f%new_slot%"
+      swapped: "&e~ Intercambió &f%amount1%x %item1% &e(slot %slot1%) con &f%amount2%x %item2% &e(slot %slot2%)"
+      replaced: "&e~ Reemplazó &f%old_amount%x %old_item% &epor &f%amount%x %item% &een el slot &f%slot%"
+      amount_changed: "&e~ Modificó la cantidad de &f%item% &een el slot &f%slot%&e: de &f%old_amount% &ea &f%amount%"
 
   helpop:
     usage: "#ed2d2dUso: /helpop <mensaje>"
@@ -467,13 +497,18 @@ commands:
 
   dementialwheel:
     no-permission: "#c41a36No tienes permiso para ejecutar este comando."
-    usage: "#d11d41PermaPiola &8&l>> #c41a36Uso: /dementialwheel <enable|disable> [evento]"
-    disabled-all: "#d11d41PermaPiola &8&l>> #c41a36Se han desactivado todos los eventos de la Demential Wheel."
-    enabled-all-events: "#d11d41PermaPiola &8&l>> #93c47d¡Se han activado TODOS los eventos de la Demential Wheel!"
-    force-enabled: "#d11d41PermaPiola &8&l>> #a4c2f4Evento activada forzosamente en el evento: #ffd966%event%"
+    usage: "#d11d41PermaPiola &8&l>> #c41a36Uso: /dementialwheel <start|stop|force|disable> [evento]"
+    start: "#d11d41PermaPiola &8&l>> #93c47dSecuencia de la Ruleta Demencial iniciada manualmente."
+    stop: "#d11d41PermaPiola &8&l>> #c41a36La Ruleta Demencial ha sido detenida y los eventos limpiados."
+    force-enabled: "#d11d41PermaPiola &8&l>> #a4c2f4Has activado forzosamente el evento: #ffd966%event%"
+    force-disabled: "#d11d41PermaPiola &8&l>> #c41a36Se ha desactivado el evento: #ffd966%event%"
     invalid-event: "#d11d41PermaPiola &8&l>> #c41a36Evento inválido. Usa el autocompletado para ver los eventos disponibles."
     already-active: "#d11d41PermaPiola &8&l>> #c41a36Ese evento ya está activo."
-    all-events-already-active: "#d11d41PermaPiola &8&l>> #c41a36¡Todos los eventos ya se encuentran activados!"
-    no-events-active: "#d11d41PermaPiola &8&l>> #c41a36No hay ningún evento activo en la Demential Wheel."
     event-not-active: "#d11d41PermaPiola &8&l>> #c41a36Ese evento no está activo actualmente."
-    force-disabled: "#d11d41PermaPiola &8&l>> #c41a36Se ha desactivado el evento: #ffd966%event%"
+    broadcast-force: "#d11d41PermaPiola &8&l>> #a4c2f4¡El evento #ffd966%event% #a4c2f4ha sido activado!"
+    staff-alert-start: "&8[&cDementialWheel&8] &f%admin% &7ha iniciado la ruleta manualmente."
+    staff-alert-stop: "&8[&cDementialWheel&8] &f%admin% &7ha detenido la ruleta."
+    staff-alert-force: "&8[&cDementialWheel&8] &f%admin% &7ha forzado el evento: &f%event%"
+    staff-alert-disable: "&8[&cDementialWheel&8] &f%admin% &7ha desactivado el evento: &f%event%"
+    already-rolling: "#d11d41PermaPiola &8&l>> #c41a36La ruleta ya está girando o tiene eventos activos."
+    no-events-active: "#d11d41PermaPiola &8&l>> #c41a36No hay ningún evento activo ni girando."

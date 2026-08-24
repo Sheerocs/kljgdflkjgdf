@@ -2,6 +2,7 @@ package pp.sheero.permapiola.totem;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
 
 import java.io.File;
@@ -17,6 +18,7 @@ public class TotemManager {
     private final File dataFile;
 
     public static class TotemProfile {
+        public String name = "Desconocido";
         public int count = 0;
         public String soundMode = "ALL";
         public String soundType = "ITEM_TOTEM_USE";
@@ -45,9 +47,20 @@ public class TotemManager {
         if (dataConfig.contains("players")) {
             for (String uuidStr : dataConfig.getConfigurationSection("players").getKeys(false)) {
                 TotemProfile profile = new TotemProfile();
-                profile.count = dataConfig.getInt("players." + uuidStr + ".count", 0);
-                profile.soundMode = dataConfig.getString("players." + uuidStr + ".mode", "ALL");
-                profile.soundType = dataConfig.getString("players." + uuidStr + ".type", "ITEM_TOTEM_USE");
+                String basePath = "players." + uuidStr;
+
+                profile.count = dataConfig.getInt(basePath + ".count", 0);
+                profile.soundMode = dataConfig.getString(basePath + ".mode", "ALL");
+                profile.soundType = dataConfig.getString(basePath + ".type", "ITEM_TOTEM_USE");
+
+                String savedName = dataConfig.getString(basePath + ".name", "Desconocido");
+
+                if (savedName.equals("Desconocido")) {
+                    org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(uuidStr));
+                    if (op.getName() != null) savedName = op.getName();
+                }
+                profile.name = savedName;
+
                 try {
                     cache.put(UUID.fromString(uuidStr), profile);
                 } catch (IllegalArgumentException ignored) {}
@@ -59,6 +72,7 @@ public class TotemManager {
         Map<UUID, TotemProfile> snapshot = new HashMap<>();
         cache.forEach((uuid, profile) -> {
             TotemProfile p = new TotemProfile();
+            p.name = profile.name;
             p.count = profile.count;
             p.soundMode = profile.soundMode;
             p.soundType = profile.soundType;
@@ -68,6 +82,7 @@ public class TotemManager {
         YamlConfiguration config = new YamlConfiguration();
         for (Map.Entry<UUID, TotemProfile> entry : snapshot.entrySet()) {
             String path = "players." + entry.getKey().toString();
+            config.set(path + ".name", entry.getValue().name);
             config.set(path + ".count", entry.getValue().count);
             config.set(path + ".mode", entry.getValue().soundMode);
             config.set(path + ".type", entry.getValue().soundType);
@@ -87,12 +102,37 @@ public class TotemManager {
         return getProfile(uuid).count;
     }
 
+    public String getName(UUID uuid) {
+        return getProfile(uuid).name;
+    }
+
+    public UUID getUUIDByName(String name) {
+        for (Map.Entry<UUID, TotemProfile> entry : cache.entrySet()) {
+            if (entry.getValue().name.equalsIgnoreCase(name)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public void updateNameCache(UUID uuid, String name) {
+        if (name != null && !name.equals("Desconocido")) {
+            getProfile(uuid).name = name;
+        }
+    }
+
     public void addTotem(UUID uuid, int amount) {
-        getProfile(uuid).count += amount;
+        TotemProfile p = getProfile(uuid);
+        p.count += amount;
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) p.name = player.getName();
     }
 
     public void setTotems(UUID uuid, int amount) {
-        getProfile(uuid).count = amount;
+        TotemProfile p = getProfile(uuid);
+        p.count = amount;
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) p.name = player.getName();
     }
 
     public Map<UUID, TotemProfile> getAllProfiles() {
