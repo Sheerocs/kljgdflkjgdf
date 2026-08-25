@@ -1,12 +1,14 @@
 package pp.sheero.permapiola.totem;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.attribute.Attribute;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -26,8 +28,6 @@ import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.DeathStateManager;
 import pp.sheero.permapiola.dementialwheel.DementialEventType;
 import pp.sheero.permapiola.dementialwheel.DementialWheelManager;
-
-import java.util.Objects;
 
 public class TotemListener implements Listener {
 
@@ -118,6 +118,42 @@ public class TotemListener implements Listener {
 
         org.bukkit.scoreboard.Team userTeam = TeamManager.getTeam(player);
 
+        CommandSender console = Bukkit.getConsoleSender();
+        Component consoleDamageComponent = Component.text("Desconocido");
+        if (customCause != null) {
+            consoleDamageComponent = Component.text(customCause);
+        } else if (damager != null) {
+            consoleDamageComponent = getFormattedDamagerComponent(damager, console);
+        } else if (vanillaCauseName != null) {
+            String translatedCause = languageManager.getMsg(console, "totems.causes." + vanillaCauseName.toLowerCase());
+            if (translatedCause.startsWith("Error:") || translatedCause.startsWith("Falta mensaje")) {
+                consoleDamageComponent = Component.text(formatVanillaName(vanillaCauseName));
+            } else {
+                consoleDamageComponent = Component.text(translatedCause);
+            }
+        }
+
+        String consoleHoverRaw = languageManager.getMsg(console, "totems.hover-details")
+                .replace("%x%", xStr)
+                .replace("%y%", yStr)
+                .replace("%z%", zStr)
+                .replace("%world%", worldDisplay)
+                .replace("%left%", totemsStr)
+                .replace("\\n", "\n");
+
+        Component consoleHoverComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(consoleHoverRaw))
+                .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder()
+                        .matchLiteral("%damage%")
+                        .replacement(consoleDamageComponent)
+                        .build());
+
+        String consoleBroadcastRaw = doubleTotem ?
+                languageManager.getMsg(console, "totems.broadcast-double").replace("%player%", formattedUserName) :
+                languageManager.getMsg(console, "totems.broadcast").replace("%player%", formattedUserName);
+
+        console.sendMessage(ColorUtils.format(consoleBroadcastRaw));
+        console.sendMessage(consoleHoverComp);
+
         for (Player online : Bukkit.getOnlinePlayers()) {
 
             Component damageComponent = Component.text("Desconocido");
@@ -127,7 +163,7 @@ public class TotemListener implements Listener {
                 damageComponent = getFormattedDamagerComponent(damager, online);
             } else if (vanillaCauseName != null) {
                 String translatedCause = languageManager.getMsg(online, "totems.causes." + vanillaCauseName.toLowerCase());
-                if (translatedCause.startsWith("Falta mensaje")) {
+                if (translatedCause.startsWith("Error:") || translatedCause.startsWith("Falta mensaje")) {
                     damageComponent = Component.text(formatVanillaName(vanillaCauseName));
                 } else {
                     damageComponent = Component.text(translatedCause);
@@ -158,6 +194,10 @@ public class TotemListener implements Listener {
             Component broadcastComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(broadcastRaw))
                     .hoverEvent(HoverEvent.showText(hoverComp));
 
+            if (online.hasPermission("permapiola.staff") && (online.getGameMode() == GameMode.CREATIVE || online.getGameMode() == GameMode.SPECTATOR)) {
+                broadcastComp = broadcastComp.clickEvent(ClickEvent.runCommand("/tp " + xStr + " " + yStr + " " + zStr));
+            }
+
             online.sendMessage(broadcastComp);
 
             if (online.equals(player)) continue;
@@ -183,7 +223,7 @@ public class TotemListener implements Listener {
         }
     }
 
-    private Component getFormattedDamagerComponent(Entity damager, Player receiver) {
+    private Component getFormattedDamagerComponent(Entity damager, CommandSender receiver) {
         if (damager == null) return Component.text("Desconocido");
 
         if (damager.getCustomName() != null) {
@@ -215,7 +255,7 @@ public class TotemListener implements Listener {
 
             if (source instanceof org.bukkit.entity.EnderDragon) {
                 String translatedCause = languageManager.getMsg(receiver, "totems.causes.dragon_breath");
-                return Component.text(!translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
+                return Component.text(!translatedCause.startsWith("Error:") && !translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
             }
 
             if (source instanceof Entity) {
@@ -224,7 +264,7 @@ public class TotemListener implements Listener {
 
             if (damager.getWorld().getName().endsWith("_the_end")) {
                 String translatedCause = languageManager.getMsg(receiver, "totems.causes.dragon_breath");
-                return Component.text(!translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
+                return Component.text(!translatedCause.startsWith("Error:") && !translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
             }
         }
 

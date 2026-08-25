@@ -154,10 +154,12 @@ public class HurricaneManager implements Listener {
 
     public void stopHurricane() {
         if (active) {
-            String msg = ColorUtils.format(lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.hurricane-end"));
-            Bukkit.getConsoleSender().sendMessage(msg);
+            String consoleMsg = ColorUtils.format(lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.hurricane-end"));
+            Bukkit.getConsoleSender().sendMessage(consoleMsg);
+
             for (Player p : Bukkit.getOnlinePlayers()) {
-                p.sendMessage(msg);
+                String playerMsg = ColorUtils.format(lang.getMsg(p, "hurricane.death-event.hurricane-end"));
+                p.sendMessage(playerMsg);
             }
         }
 
