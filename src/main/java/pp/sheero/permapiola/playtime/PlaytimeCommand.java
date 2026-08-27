@@ -490,14 +490,21 @@ public class PlaytimeCommand implements CommandExecutor, TabCompleter {
             User user = api.getUserManager().loadUser(op.getUniqueId()).join();
 
             if (user != null) {
-                String groupName = user.getPrimaryGroup();
-                Group group = api.getGroupManager().getGroup(groupName);
+                SortedMap<Integer, String> prefixes = user.getCachedData().getMetaData().getPrefixes();
 
-                if (group != null) {
-                    String prefix = group.getCachedData().getMetaData().getPrefix();
-                    if (prefix != null && !prefix.isEmpty()) {
-                        return prefix + playerName;
+                String finalPrefix = "";
+                int highestWeight = Integer.MIN_VALUE;
+
+                for (Map.Entry<Integer, String> entry : prefixes.entrySet()) {
+                    int weight = entry.getKey();
+                    if (weight != 9999 && weight > highestWeight) {
+                        highestWeight = weight;
+                        finalPrefix = entry.getValue();
                     }
+                }
+
+                if (!finalPrefix.isEmpty()) {
+                    return finalPrefix + playerName;
                 }
             }
         } catch (Exception ignored) {}

@@ -77,13 +77,13 @@ public class ReviveCommand {
                     DeathInventoryManager.restoreInventory(target);
                 }
                 plugin.getDiscordManager().deleteDeathMessage(target.getUniqueId());
+                DeathStateManager.decrementTotalDeaths();
             } else {
                 DeathInventoryManager.clearInventory(target);
                 plugin.getDiscordManager().sendReviveEmbed(target);
             }
 
             DeathStateManager.setDead(target.getUniqueId(), false);
-            DeathStateManager.decrementTotalDeaths();
 
             long durationHours = plugin.getConfig().getLong("hurricane.duration-hours", 1);
             long durationSeconds = durationHours * 3600;

@@ -133,6 +133,12 @@ public class TotemListener implements Listener {
             }
         }
 
+        String consoleBroadcastRaw = doubleTotem ?
+                languageManager.getMsg(console, "totems.broadcast-double").replace("%player%", formattedUserName) :
+                languageManager.getMsg(console, "totems.broadcast").replace("%player%", formattedUserName);
+
+        console.sendMessage(ColorUtils.format(consoleBroadcastRaw));
+
         String consoleHoverRaw = languageManager.getMsg(console, "totems.hover-details")
                 .replace("%x%", xStr)
                 .replace("%y%", yStr)
@@ -141,18 +147,14 @@ public class TotemListener implements Listener {
                 .replace("%left%", totemsStr)
                 .replace("\\n", "\n");
 
-        Component consoleHoverComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(consoleHoverRaw))
-                .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder()
-                        .matchLiteral("%damage%")
-                        .replacement(consoleDamageComponent)
-                        .build());
-
-        String consoleBroadcastRaw = doubleTotem ?
-                languageManager.getMsg(console, "totems.broadcast-double").replace("%player%", formattedUserName) :
-                languageManager.getMsg(console, "totems.broadcast").replace("%player%", formattedUserName);
-
-        console.sendMessage(ColorUtils.format(consoleBroadcastRaw));
-        console.sendMessage(consoleHoverComp);
+        for (String line : consoleHoverRaw.split("\n")) {
+            Component lineComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(line))
+                    .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder()
+                            .matchLiteral("%damage%")
+                            .replacement(consoleDamageComponent)
+                            .build());
+            console.sendMessage(lineComp);
+        }
 
         for (Player online : Bukkit.getOnlinePlayers()) {
 

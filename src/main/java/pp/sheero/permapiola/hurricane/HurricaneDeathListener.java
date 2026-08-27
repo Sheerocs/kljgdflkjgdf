@@ -199,9 +199,6 @@ public class HurricaneDeathListener implements Listener {
 
         String coordsStr = deathLoc.getBlockX() + " " + deathLoc.getBlockY() + " " + deathLoc.getBlockZ();
 
-        // ==========================================================
-        // LÓGICA DE LA CONSOLA
-        // ==========================================================
         String consoleCause = (customCauseKey != null) ? lang.getMsg(Bukkit.getConsoleSender(), customCauseKey).replace("%player%", victim.getName()) : vanillaMsg;
         String consoleMsgRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.broadcast-message").replace("%victim%", victim.getName());
         Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleMsgRaw));
@@ -222,12 +219,9 @@ public class HurricaneDeathListener implements Listener {
             end--;
         }
 
-        StringBuilder consoleHover = new StringBuilder();
         for (int i = 0; i <= end; i++) {
-            consoleHover.append(hoverLines[i]);
-            if (i < end) consoleHover.append("\n");
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(hoverLines[i]));
         }
-        Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleHover.toString()));
 
         String consoleFormattedAdded = plugin.getHurricaneManager().getFormattedDuration(addedSeconds, Bukkit.getConsoleSender());
 
