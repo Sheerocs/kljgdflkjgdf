@@ -4,13 +4,28 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import pp.sheero.permapiola.chat.ChatListener;
+import pp.sheero.permapiola.chat.ChatManager;
+import pp.sheero.permapiola.chat.EmoteGUIListener;
+import pp.sheero.permapiola.chat.EmoteManager;
+import pp.sheero.permapiola.chat.commands.*;
+import pp.sheero.permapiola.commands.*;
+import pp.sheero.permapiola.core.DayManager;
+import pp.sheero.permapiola.core.LanguageManager;
+import pp.sheero.permapiola.core.PlayerConnectionListener;
+import pp.sheero.permapiola.core.ServerPingListener;
 import pp.sheero.permapiola.hurricane.*;
-import pp.sheero.permapiola.managers.*;
+import pp.sheero.permapiola.inactivity.AFKManager;
+import pp.sheero.permapiola.inactivity.InactivityManager;
+import pp.sheero.permapiola.inventory.*;
+import pp.sheero.permapiola.moderation.CombatLogListener;
+import pp.sheero.permapiola.moderation.CommandBlockerListener;
+import pp.sheero.permapiola.moderation.MiningListener;
 import pp.sheero.permapiola.playtime.*;
+import pp.sheero.permapiola.scoreboard.ScoreboardManager;
+import pp.sheero.permapiola.scoreboard.SidebarCommand;
 import pp.sheero.permapiola.teams.*;
 import pp.sheero.permapiola.totem.*;
-import pp.sheero.permapiola.utilidad.commands.*;
-import pp.sheero.permapiola.utilidad.listeners.*;
 
 public final class PermaPiola extends JavaPlugin {
 
@@ -74,32 +89,30 @@ public final class PermaPiola extends JavaPlugin {
 
         // 3.5 Registro de Comandos Modernos (Brigadier)
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-            pp.sheero.permapiola.utilidad.commands.GmCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.GmaCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.GmcCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.GmsCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.GmspCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.MsgCommand.register(event.registrar(), languageManager, emoteManager);
-            pp.sheero.permapiola.utilidad.commands.ReplyCommand.register(event.registrar(), languageManager, emoteManager);
-            pp.sheero.permapiola.utilidad.commands.ChatCommand.register(event.registrar(), chatManager, languageManager);
-            pp.sheero.permapiola.utilidad.commands.StaffChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
+            GmCommand.register(event.registrar(), languageManager);
+            GmaCommand.register(event.registrar(), languageManager);
+            GmcCommand.register(event.registrar(), languageManager);
+            GmsCommand.register(event.registrar(), languageManager);
+            GmspCommand.register(event.registrar(), languageManager);
+            MsgCommand.register(event.registrar(), languageManager, emoteManager);
+            ReplyCommand.register(event.registrar(), languageManager, emoteManager);
+            ChatCommand.register(event.registrar(), chatManager, languageManager);
+            StaffChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
             pp.sheero.permapiola.teams.TeamChatCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
-            pp.sheero.permapiola.utilidad.commands.BroadcastCommand.register(event.registrar(), languageManager, emoteManager);
-            pp.sheero.permapiola.utilidad.commands.PermaPiolaCommand.register(event.registrar(), this, languageManager, emoteManager);
-            pp.sheero.permapiola.utilidad.commands.EmotesCommand.register(event.registrar(), emoteManager, languageManager);
-            pp.sheero.permapiola.utilidad.commands.EnderChestCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.SidebarCommand.register(event.registrar(), scoreboardManager, languageManager);
-            pp.sheero.permapiola.utilidad.commands.ReviveCommand.register(event.registrar(), this, languageManager);
-            pp.sheero.permapiola.utilidad.commands.PlayerIpCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.RenameCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.utilidad.commands.InventoryCommand.register(event.registrar(), languageManager);
+            HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
+            BroadcastCommand.register(event.registrar(), languageManager, emoteManager);
+            PermaPiolaCommand.register(event.registrar(), this, languageManager, emoteManager);
+            EmotesCommand.register(event.registrar(), emoteManager, languageManager);
+            EnderChestCommand.register(event.registrar(), languageManager);
+            SidebarCommand.register(event.registrar(), scoreboardManager, languageManager);
+            ReviveCommand.register(event.registrar(), this, languageManager);
+            PlayerIpCommand.register(event.registrar(), languageManager);
+            RenameCommand.register(event.registrar(), languageManager);
+            InventoryCommand.register(event.registrar(), languageManager);
             pp.sheero.permapiola.hurricane.DeathMessageCommand.register(event.registrar(), this, languageManager);
             pp.sheero.permapiola.dementialwheel.DementialWheelCommand.register(event.registrar(), dementialWheelManager, languageManager);
             pp.sheero.permapiola.hurricane.HurricaneCommand.register(event.registrar(), hurricaneManager, languageManager);
-            // GmcCommand.register(...)
-            // GmsCommand.register(...)
-            // PlaytimeCommand.register(...)
+            SpectatorChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
         });
 
         // 4. Tareas, Dependencias (ProtocolLib) y Carga de Datos Estáticos
@@ -112,8 +125,8 @@ public final class PermaPiola extends JavaPlugin {
         }
 
         TeamManager.loadData(this);
-        pp.sheero.permapiola.utils.DeathStateManager.loadData(this);
-        pp.sheero.permapiola.utils.DeathInventoryManager.init(this);
+        DeathStateManager.loadData(this);
+        DeathInventoryManager.init(this);
 
         getLogger().info("Successfully enabled.");
     }
@@ -130,8 +143,8 @@ public final class PermaPiola extends JavaPlugin {
         if (inactivityManager != null) inactivityManager.saveData();
 
         TeamManager.saveData(this);
-        pp.sheero.permapiola.utils.DeathStateManager.saveData(this);
-        pp.sheero.permapiola.utils.DeathInventoryManager.saveDataSync();
+        DeathStateManager.saveData(this);
+        DeathInventoryManager.saveDataSync();
     }
 
     // ==========================================================
@@ -160,7 +173,7 @@ public final class PermaPiola extends JavaPlugin {
         pm.registerEvents(new ServerPingListener(this), this);
         pm.registerEvents(new MiningListener(this, languageManager), this);
         pm.registerEvents(new InventoryListener(this, languageManager), this);
-        pm.registerEvents(new EmoteGUIListener(), this);
+        pm.registerEvents(new EmoteGUIListener(languageManager), this);
         pm.registerEvents(new CommandBlockerListener(this, languageManager), this);
         pm.registerEvents(new DeathInventoryEditListener(languageManager), this);
         pm.registerEvents(this.inactivityManager, this);

@@ -22,10 +22,10 @@ import org.bukkit.event.entity.EntityResurrectEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.LanguageManager;
+import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.teams.TeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
-import pp.sheero.permapiola.utils.DeathStateManager;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 import pp.sheero.permapiola.dementialwheel.DementialEventType;
 import pp.sheero.permapiola.dementialwheel.DementialWheelManager;
 

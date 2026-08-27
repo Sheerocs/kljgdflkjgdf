@@ -7,17 +7,17 @@ settings:
   default-language: "es_ES"
 
 system:
-  start-date: "2026-04-27T21:10:00"
+  start-date: "2026-08-08T14:10:00"
 
 inactivity:
   # Formatos aceptados: w (semanas), d (días), h (horas), m (minutos), s (segundos)
   # Ejemplo: "48h" (48 horas), "2d" (2 días)
   max-offline-time: "3d"
-  required-playtime: "1m"
+  required-playtime: "30m"
   grace-period: "1m"
 
 discord:
-  enabled: false
+  enabled: true
   channel-name: "muertes"
   death-embed:
     title: "¡%victim% ha sido permabaneado!"
@@ -27,20 +27,24 @@ discord:
     location-title: "Ubicación"
     location-format: "Coordenadas: %x% %y% %z%\nMundo: %world%"
     footer: "TPS: %tps% | Ping: %ping%ms • %date%"
-
-    # Traducción de los mundos de Minecraft para que se vean bien en Discord
     worlds:
       "world": "Over"
       "world_nether": "Nether"
       "world_the_end": "End"
       "world_permapiola_fallen_memories": "Fallen Memories"
+  revive-embed:
+    title: "¡%victim% ha comprado un revive!"
+    color: "#18f523"
+    description: "**A Misenba le encanta la money.**"
 
 # ============================================================= #
 #                           HURRICANE                           #
 # ============================================================= #
 
 hurricane:
-  duration: "1h" # Formatos: 15m, 1h, 1h30m
+  # Formatos aceptados: h (horas), m (minutos), s (segundos)
+  # Ejemplo: "48h" (48 horas), "2m" (2 minutos)
+  duration: "1h"
   head-name: "&c&l%victim%"
   head-lore:
     - "&c&lHA SIDO PERMABANEADO"
@@ -76,7 +80,7 @@ demential-wheel:
 teams:
   enabled: true
   friendly-fire: false
-  max-size: 5
+  max-size: 6
 
 # ============================================================= #
 #                           PLAYTIME                            #
@@ -150,7 +154,7 @@ spawn:
     enabled: true
     world: "world"
     x: 0.5
-    y: 70.0
+    y: 72.0
     z: 0.5
     yaw: 0.0
     pitch: 0.0

@@ -4,7 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.LanguageManager;
+import pp.sheero.permapiola.core.LanguageManager;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.io.File;
@@ -278,7 +279,7 @@ public class DementialWheelManager {
             double healthToRemove = this.lifeErosionHeartsToRemove * 2.0;
 
             for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR || p.getGameMode() == org.bukkit.GameMode.CREATIVE || pp.sheero.permapiola.utils.DeathStateManager.isDead(p.getUniqueId())) continue;
+                if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR || p.getGameMode() == org.bukkit.GameMode.CREATIVE || DeathStateManager.isDead(p.getUniqueId())) continue;
 
                 org.bukkit.attribute.AttributeInstance maxHealth = p.getAttribute(Attribute.MAX_HEALTH);
                 if (maxHealth != null) {
@@ -293,7 +294,7 @@ public class DementialWheelManager {
 
     public void applyErosionIfMissing(Player p) {
         if (!hasEvent(DementialEventType.LIFE_EROSION)) return;
-        if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR || p.getGameMode() == org.bukkit.GameMode.CREATIVE || pp.sheero.permapiola.utils.DeathStateManager.isDead(p.getUniqueId())) return;
+        if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR || p.getGameMode() == org.bukkit.GameMode.CREATIVE || DeathStateManager.isDead(p.getUniqueId())) return;
         if (erodedPlayers.contains(p.getUniqueId())) return;
 
         double healthToRemove = this.lifeErosionHeartsToRemove * 2.0;

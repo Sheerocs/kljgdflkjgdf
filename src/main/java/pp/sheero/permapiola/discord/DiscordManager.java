@@ -7,7 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.utils.DeathStateManager;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 
 import java.awt.Color;
 import java.util.UUID;
@@ -27,6 +27,9 @@ public class DiscordManager {
     private String locFormat;
     private String footerFormat;
     private String deathMsgTitle;
+    private String reviveTitle;
+    private Color reviveColor;
+    private String reviveDescription;
 
     public DiscordManager(PermaPiola plugin) {
         this.plugin = plugin;
@@ -39,19 +42,24 @@ public class DiscordManager {
         this.discordEnabled = config.getBoolean("discord.enabled", false);
         this.channelName = config.getString("discord.channel-name", "muertes");
         this.embedTitle = config.getString("discord.death-embed.title", "¡%victim% ha muerto!");
-
         try {
             this.embedColor = Color.decode(config.getString("discord.death-embed.color", "#cc0425"));
         } catch (Exception e) {
             this.embedColor = new Color(204, 4, 37);
         }
-
         this.dayAndDeathFormat = config.getString("discord.death-embed.day-and-death", "**Día: %day% | Muerte: %death_number%**");
         this.causeTitle = config.getString("discord.death-embed.cause-title", "Causa de Muerte");
         this.locTitle = config.getString("discord.death-embed.location-title", "Ubicación");
         this.locFormat = config.getString("discord.death-embed.location-format", "Coordenadas: %x% %y% %z%\nMundo: %world%");
         this.footerFormat = config.getString("discord.death-embed.footer", "TPS: %tps% | Ping: %ping%ms • %date%");
         this.deathMsgTitle = config.getString("discord.death-embed.death-message-title", "Últimas palabras");
+        this.reviveTitle = config.getString("discord.revive-embed.title", "¡%victim% ha comprado un revive!");
+        try {
+            this.reviveColor = Color.decode(config.getString("discord.revive-embed.color", "#18f523"));
+        } catch (Exception e) {
+            this.reviveColor = new Color(24, 245, 35);
+        }
+        this.reviveDescription = config.getString("discord.revive-embed.description", "**El jugador ha vuelto al mundo de los vivos.**");
     }
 
     private String wrapText(String text, int maxLineLength) {
@@ -139,9 +147,7 @@ public class DiscordManager {
 
                 if (plugin.getDeathMessageManager().hasMessage(victimUUID)) {
                     String customMsg = plugin.getDeathMessageManager().getMessage(victimUUID);
-
                     String wrappedMsg = wrapText(customMsg, 50);
-
                     embed.addField(deathMsgTitle, wrappedMsg, false);
                 }
 
@@ -159,6 +165,42 @@ public class DiscordManager {
 
             } catch (Exception e) {
                 plugin.getLogger().severe("Error al enviar el embed a Discord: " + e.getMessage());
+            }
+        });
+    }
+
+    public void sendReviveEmbed(Player victim) {
+        if (!isDiscordSRVLoaded || !discordEnabled) return;
+
+        String victimName = victim.getName();
+        UUID victimUUID = victim.getUniqueId();
+        String tps = String.format("%.2f", Bukkit.getTPS()[0]);
+        int ping = victim.getPing();
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                TextChannel channel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(channelName);
+                if (channel == null) return;
+
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.setTitle(reviveTitle.replace("%victim%", victimName));
+                embed.setColor(reviveColor);
+                embed.setThumbnail("https://mc-heads.net/avatar/" + victimUUID + "/100");
+
+                embed.setDescription(reviveDescription + "\n\n");
+
+                java.time.LocalDateTime now = java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
+                String dateStr = now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+                embed.setFooter(footerFormat
+                        .replace("%tps%", tps)
+                        .replace("%ping%", String.valueOf(ping))
+                        .replace("%date%", dateStr));
+
+                channel.sendMessageEmbeds(embed.build()).queue();
+
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error al enviar el embed de revive a Discord: " + e.getMessage());
             }
         });
     }

@@ -13,7 +13,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Team;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.LanguageManager;
+import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.teams.TeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.TimeUtils;

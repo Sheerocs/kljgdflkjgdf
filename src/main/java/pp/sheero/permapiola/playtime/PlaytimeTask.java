@@ -5,8 +5,8 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.AFKManager;
-import pp.sheero.permapiola.utils.DeathStateManager;
+import pp.sheero.permapiola.inactivity.AFKManager;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 
 public class PlaytimeTask extends BukkitRunnable {
 

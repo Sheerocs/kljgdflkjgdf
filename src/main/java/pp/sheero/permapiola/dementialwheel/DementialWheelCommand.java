@@ -6,7 +6,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import pp.sheero.permapiola.managers.LanguageManager;
+import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.util.Arrays;

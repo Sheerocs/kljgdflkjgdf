@@ -7,6 +7,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import pp.sheero.permapiola.PermaPiola;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 
 public class DementialWheelTask implements Runnable {
 
@@ -22,7 +23,7 @@ public class DementialWheelTask implements Runnable {
         if (!manager.isActive()) return;
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.getGameMode() == GameMode.SPECTATOR || p.getGameMode() == GameMode.CREATIVE || pp.sheero.permapiola.utils.DeathStateManager.isDead(p.getUniqueId())) continue;
+            if (p.getGameMode() == GameMode.SPECTATOR || p.getGameMode() == GameMode.CREATIVE || DeathStateManager.isDead(p.getUniqueId())) continue;
 
             // 2. EVENTO: PUTRIFIED WATER
             if (manager.hasEvent(DementialEventType.PUTRIFIED_WATER)) {

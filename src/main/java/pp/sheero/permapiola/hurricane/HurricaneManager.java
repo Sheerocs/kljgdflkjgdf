@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.TimeSkipEvent;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.LanguageManager;
+import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.TimeUtils;
 
@@ -57,7 +57,7 @@ public class HurricaneManager implements Listener {
     public void loadConfigCache() {
         String durationStr = plugin.getConfig().getString("hurricane.duration", "1h");
         this.durationSecondsCache = TimeUtils.parseTimeString(durationStr);
-        if(this.durationSecondsCache <= 0) this.durationSecondsCache = 3600; // Por seguridad
+        if(this.durationSecondsCache <= 0) this.durationSecondsCache = 3600;
     }
 
     public long getDurationSecondsCache() {

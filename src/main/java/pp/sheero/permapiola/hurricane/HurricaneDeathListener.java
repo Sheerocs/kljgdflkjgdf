@@ -16,10 +16,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.managers.LanguageManager;
-import pp.sheero.permapiola.teams.TeamManager;
+import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
-import pp.sheero.permapiola.utils.DeathStateManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -201,6 +199,9 @@ public class HurricaneDeathListener implements Listener {
 
         String coordsStr = deathLoc.getBlockX() + " " + deathLoc.getBlockY() + " " + deathLoc.getBlockZ();
 
+        // ==========================================================
+        // LÓGICA DE LA CONSOLA
+        // ==========================================================
         String consoleCause = (customCauseKey != null) ? lang.getMsg(Bukkit.getConsoleSender(), customCauseKey).replace("%player%", victim.getName()) : vanillaMsg;
         String consoleMsgRaw = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.broadcast-message").replace("%victim%", victim.getName());
         Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleMsgRaw));
@@ -227,6 +228,16 @@ public class HurricaneDeathListener implements Listener {
             if (i < end) consoleHover.append("\n");
         }
         Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleHover.toString()));
+
+        String consoleFormattedAdded = plugin.getHurricaneManager().getFormattedDuration(addedSeconds, Bukkit.getConsoleSender());
+
+        if (wasActive) {
+            String consoleAddedMsg = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.hurricane-added").replace("%duration%", consoleFormattedAdded);
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleAddedMsg));
+        } else {
+            String consoleStartMsg = lang.getMsg(Bukkit.getConsoleSender(), "hurricane.death-event.hurricane-start").replace("%duration%", consoleFormattedAdded);
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleStartMsg));
+        }
 
         for (Player p : Bukkit.getOnlinePlayers()) {
 

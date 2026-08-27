@@ -21,108 +21,102 @@ commands:
 
 permissions:
   permapiola.admin:
-    description: Permiso base para mensajes de entrada/salida de administradores.
+    description: Permiso base general y mensajes de entrada/salida de administradores.
   permapiola.admin.broadcast:
     description: Permite ejecutar el comando broadcast.
   permapiola.admin.enderchest:
-    description: Permite ejecutar el comando enderchest de otros jugadores.
+    description: Permite abrir el enderchest de otros jugadores.
   permapiola.admin.playerip:
-    description: Permite ejecutar el comando playerip.
+    description: Permite ver la IP de un jugador.
   permapiola.admin.reload:
-    description: Permite ejecutar el comando permapiola reload.
+    description: Permite recargar las configuraciones del plugin.
   permapiola.admin.staffchat:
-    description: Permite ejecutar comando staffchat, verlo y usar autocompletado en /chat.
+    description: Permite hablar y leer el chat del Staff.
+  permapiola.admin.spectatorchat:
+    description: Permite hablar y leer el chat de Espectadores.
+  permapiola.admin.spectator:
+    description: Permite seleccionar el canal de espectadores en el comando /chat.
   permapiola.admin.gamemode:
-    description: Permite ejecutar el comando general gamemode.
+    description: Permite cambiar de modo de juego.
   permapiola.admin.gamemode.adventure:
-    description: Permite ejecutar comando gma.
+    description: Permite usar el comando /gma.
   permapiola.admin.gamemode.creative:
-    description: Permite ejecutar comando gmc.
+    description: Permite usar el comando /gmc.
   permapiola.admin.gamemode.spectator:
-    description: Permite ejecutar comando gmsp.
+    description: Permite usar el comando /gmsp.
   permapiola.admin.gamemode.survival:
-    description: Permite ejecutar comando gms.
+    description: Permite usar el comando /gms.
   permapiola.admin.mining:
-    description: Permite recibir mensajes de mineria del mininglistener.
+    description: Recibe notificaciones cuando alguien mina bloques valiosos.
   permapiola.admin.helpop:
-    description: Permite recibir los mensajes enviados mediante /helpop.
+    description: Recibe los mensajes de ayuda de los jugadores.
   permapiola.admin.combatlog:
-    description: Permite recibir mensajes de jugadores que hacen combatlog.
+    description: Recibe notificaciones cuando alguien abandona en combate.
   permapiola.admin.revive:
-    description: Permite ejecutar el comando revive.
-  permapiola.admin.spec:
-    description: Permite ejecutar el comando revive.
+    description: Permite revivir a un jugador muerto.
 
   permapiola.admin.inventory:
-    description: Permite ver el comando inventory.
+    description: Permiso base para comandos de inventario.
   permapiola.admin.inventory.see:
-    description: Permite ejecutar el comando inventory y gestionar inventarios.
+    description: Permite abrir y editar el inventario en vivo de otros.
   permapiola.admin.inventory.death:
-    description: Permite ejecutar el comando inventory y gestionar inventarios.
+    description: Permite inspeccionar y auditar las tumbas de los caídos.
 
   permapiola.admin.team:
-    description: Permite ver la seccion admin del team.
+    description: Permiso base para administrar equipos.
   permapiola.admin.team.system:
-    description: Permite activar o desactivar los equipos.
+    description: Activar o desactivar el sistema de equipos.
   permapiola.admin.team.reset:
-    description: Permite borrar todos los equipos.
+    description: Borrar todos los equipos del servidor.
   permapiola.admin.team.fire:
-    description: Permite activar o desactivar el fuego amigo.
+    description: Activar o desactivar el fuego amigo global.
   permapiola.admin.team.size:
-    description: Permite establecer el temaño de los equipos.
+    description: Cambiar el límite de miembros por equipo.
   permapiola.admin.team.forcejoin:
-    description: Permite unir a un jugador a la fuerza a un equipo.
+    description: Unir a un jugador a un equipo a la fuerza.
   permapiola.admin.team.forceleave:
-    description: Permite sacar a un jugador a la fuerza de un equipo.
+    description: Expulsar a un jugador de su equipo a la fuerza.
   permapiola.admin.team.list:
-    description: Permite ver todos los equipos en una lista.
+    description: Ver la lista de todos los equipos creados.
   permapiola.admin.team.spy:
-    description: Permite ver los mensajes de todos los equipos en sus chats privados.
+    description: Leer los chats privados de los equipos.
 
   permapiola.admin.totem:
-    description: Permite ver la seccion admin del totem.
+    description: Permiso base para administrar los tótems de los jugadores.
   permapiola.admin.totem.add:
-    description: Permite agregar totems usados de los jugadores.
+    description: Añadir tótems usados a un jugador.
   permapiola.admin.totem.remove:
-    description: Permite sacar totems usados de los jugadores.
+    description: Restar tótems usados a un jugador.
   permapiola.admin.totem.set:
-    description: Permite establecer los totems usados de los jugadores.
+    description: Establecer una cantidad exacta de tótems a un jugador.
   permapiola.admin.totem.reset:
-    description: Permite reiniciar los totems usados de los jugadores.
+    description: Reiniciar el contador de tótems a cero.
 
   permapiola.admin.playtime:
-    description: Permite ver la seccion admin del playtime.
+    description: Permiso base para administrar el tiempo de juego.
   permapiola.admin.playtime.add:
-    description: Permite agregar tiempo a los jugadores.
+    description: Añadir tiempo a un jugador.
   permapiola.admin.playtime.remove:
-    description: Permite sacar tiempo a los jugadores.
+    description: Restar tiempo a un jugador.
   permapiola.admin.playtime.set:
-    description: Permite establecer el tiempo de los jugadores.
+    description: Establecer un tiempo exacto a un jugador.
   permapiola.admin.playtime.reset:
-    description: Permite reiniciar el tiempo de los jugadores.
+    description: Reiniciar el tiempo de juego a cero.
 
   permapiola.admin.hurricane:
-    description: Permite administrar las opciones generales del Death Hurricane.
-  permapiola.admin.hurricane.disable:
-    description: Permite desactivar el evento Death Hurricane.
-  permapiola.admin.hurricane.enable:
-    description: Permite activar el evento Death Hurricane manualmente.
-  permapiola.admin.hurricane.edit:
-    description: Permite añadir, remover o establecer el tiempo del Death Hurricane.
-
+    description: Administrar completamente el evento Death Hurricane.
   permapiola.admin.dementialwheel:
-    description: Permite controlar y forzar los eventos de la Demential Wheel.
+    description: Administrar y forzar los eventos de la Ruleta Demencial.
 
   permapiola.staff:
-    description: Permiso base para acceder a funciones, chats y alertas del equipo administrativo (Staff).
-
+    description: Permiso base general para el equipo de Staff (bypasses).
   permapiola.donor:
-    description: Permiso base para mensajes de entrada/salida de donadores.
+    description: Permiso base para funciones estéticas de Donadores.
   permapiola.donor.rename:
-    description: Permite ejecutar el comando rename.
+    description: Permite renombrar objetos con colores.
   permapiola.donor.color:
-    description: Permite usar colores en los chats y mensajes privados.
+    description: Permite usar colores en el chat público y privado.
   permapiola.donor.emotes:
-    description: Permite usar emotes en los chats y mensajes privados.
+    description: Permite usar emotes en el chat y abrirlos en el menú.
   permapiola.donor.totem:
-    description: Permite seleccionar sonidos al usar un tótem.
+    description: Permite elegir sonidos especiales (premium) de muerte de tótem.

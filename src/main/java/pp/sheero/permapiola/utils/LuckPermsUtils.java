@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Team;
 import pp.sheero.permapiola.PermaPiola;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 import pp.sheero.permapiola.teams.TeamManager;
 
 public class LuckPermsUtils {

@@ -8,7 +8,7 @@ import org.bukkit.event.entity.EntityExhaustionEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.utils.DeathStateManager;
+import pp.sheero.permapiola.hurricane.DeathStateManager;
 
 public class DementialWheelListener implements Listener {
 
