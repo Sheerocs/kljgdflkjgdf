@@ -23,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.core.LanguageManager;
+import pp.sheero.permapiola.teams.PiolaTeam;
 import pp.sheero.permapiola.teams.TeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.hurricane.DeathStateManager;
@@ -70,7 +71,14 @@ public class TotemListener implements Listener {
             }
         }
 
-        totemManager.addTotem(player.getUniqueId(), doubleTotem ? 2 : 1);
+        int totemsUsed = doubleTotem ? 2 : 1;
+
+        totemManager.addTotem(player.getUniqueId(), totemsUsed);
+
+        PiolaTeam userTeam = TeamManager.getTeam(player);
+        if (userTeam != null) {
+            userTeam.addTotem(totemsUsed);
+        }
 
         int totemsLeft = 0;
         for (ItemStack item : player.getInventory().getContents()) {
@@ -115,8 +123,6 @@ public class TotemListener implements Listener {
         String yStr = String.valueOf(player.getLocation().getBlockY());
         String zStr = String.valueOf(player.getLocation().getBlockZ());
         String totemsStr = String.valueOf(totemsLeft);
-
-        org.bukkit.scoreboard.Team userTeam = TeamManager.getTeam(player);
 
         CommandSender console = Bukkit.getConsoleSender();
         Component consoleDamageComponent = Component.text("Desconocido");
@@ -210,8 +216,8 @@ public class TotemListener implements Listener {
             if (profile.soundMode.equals("ALL")) {
                 playSound = true;
             } else if (profile.soundMode.equals("TEAM")) {
-                org.bukkit.scoreboard.Team onlineTeam = TeamManager.getTeam(online);
-                if (userTeam != null && userTeam.equals(onlineTeam)) {
+                PiolaTeam onlineTeam = TeamManager.getTeam(online);
+                if (userTeam != null && onlineTeam != null && userTeam.getTeamId().equals(onlineTeam.getTeamId())) {
                     playSound = true;
                 }
             }
@@ -227,56 +233,39 @@ public class TotemListener implements Listener {
 
     private Component getFormattedDamagerComponent(Entity damager, CommandSender receiver) {
         if (damager == null) return Component.text("Desconocido");
-
-        if (damager.getCustomName() != null) {
-            return LegacyComponentSerializer.legacySection().deserialize(damager.getCustomName());
-        }
-
-        if (damager instanceof Player) {
-            return Component.text(damager.getName());
-        }
+        if (damager.getCustomName() != null) return LegacyComponentSerializer.legacySection().deserialize(damager.getCustomName());
+        if (damager instanceof Player) return Component.text(damager.getName());
 
         if (damager instanceof Projectile) {
             ProjectileSource shooter = ((Projectile) damager).getShooter();
-            if (shooter instanceof Entity) {
-                return getFormattedDamagerComponent((Entity) shooter, receiver);
-            }
+            if (shooter instanceof Entity) return getFormattedDamagerComponent((Entity) shooter, receiver);
             return Component.translatable(damager.getType().translationKey());
         }
 
         if (damager instanceof TNTPrimed) {
             Entity source = ((TNTPrimed) damager).getSource();
-            if (source != null) {
-                return getFormattedDamagerComponent(source, receiver);
-            }
+            if (source != null) return getFormattedDamagerComponent(source, receiver);
             return Component.text("TNT");
         }
 
         if (damager instanceof org.bukkit.entity.AreaEffectCloud) {
             ProjectileSource source = ((org.bukkit.entity.AreaEffectCloud) damager).getSource();
-
             if (source instanceof org.bukkit.entity.EnderDragon) {
                 String translatedCause = languageManager.getMsg(receiver, "totems.causes.dragon_breath");
                 return Component.text(!translatedCause.startsWith("Error:") && !translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
             }
-
-            if (source instanceof Entity) {
-                return getFormattedDamagerComponent((Entity) source, receiver);
-            }
-
+            if (source instanceof Entity) return getFormattedDamagerComponent((Entity) source, receiver);
             if (damager.getWorld().getName().endsWith("_the_end")) {
                 String translatedCause = languageManager.getMsg(receiver, "totems.causes.dragon_breath");
                 return Component.text(!translatedCause.startsWith("Error:") && !translatedCause.startsWith("Falta mensaje") ? translatedCause : "Dragon Breath");
             }
         }
-
         return Component.translatable(damager.getType().translationKey());
     }
 
     private String formatVanillaName(String rawName) {
         if (rawName == null || rawName.isEmpty()) return "Desconocido";
         if (rawName.equalsIgnoreCase("tnt")) return "TNT";
-
         String formatted = rawName.replace('_', ' ').toLowerCase();
         return formatted.substring(0, 1).toUpperCase() + formatted.substring(1);
     }

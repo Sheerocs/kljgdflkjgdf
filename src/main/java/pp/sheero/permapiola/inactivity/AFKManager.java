@@ -56,40 +56,6 @@ public class AFKManager implements Listener {
     }
 
     @EventHandler
-    public void onInteract(PlayerInteractEvent e) {
-        Action action = e.getAction();
-
-        if (action == Action.PHYSICAL) return;
-
-        if (action == Action.LEFT_CLICK_AIR || action == Action.RIGHT_CLICK_AIR) {
-            return;
-        }
-
-        if (e.getClickedBlock() != null) {
-            Material type = e.getClickedBlock().getType();
-            String name = type.name();
-
-            if (type == Material.NOTE_BLOCK ||
-                    type == Material.LEVER ||
-                    type == Material.BELL ||
-                    name.contains("TRAPDOOR") ||
-                    name.contains("DOOR") ||
-                    name.contains("BUTTON") ||
-                    name.contains("FENCE_GATE")) {
-                return;
-            }
-        }
-
-        if (e.getItem() != null) {
-            if (e.getItem().getType() == Material.FISHING_ROD) {
-                return;
-            }
-        }
-
-        updateActivity(e.getPlayer());
-    }
-
-    @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         updateActivity(e.getPlayer());
     }

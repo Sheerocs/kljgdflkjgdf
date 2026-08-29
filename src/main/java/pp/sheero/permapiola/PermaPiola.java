@@ -14,6 +14,11 @@ import pp.sheero.permapiola.core.DayManager;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.core.PlayerConnectionListener;
 import pp.sheero.permapiola.core.ServerPingListener;
+import pp.sheero.permapiola.dementialwheel.DementialWheelCommand;
+import pp.sheero.permapiola.dementialwheel.DementialWheelListener;
+import pp.sheero.permapiola.dementialwheel.DementialWheelManager;
+import pp.sheero.permapiola.dementialwheel.DementialWheelTask;
+import pp.sheero.permapiola.discord.DiscordManager;
 import pp.sheero.permapiola.hurricane.*;
 import pp.sheero.permapiola.inactivity.AFKManager;
 import pp.sheero.permapiola.inactivity.InactivityManager;
@@ -26,6 +31,7 @@ import pp.sheero.permapiola.scoreboard.ScoreboardManager;
 import pp.sheero.permapiola.scoreboard.SidebarCommand;
 import pp.sheero.permapiola.teams.*;
 import pp.sheero.permapiola.totem.*;
+import pp.sheero.permapiola.utils.LuckPermsUtils;
 
 public final class PermaPiola extends JavaPlugin {
 
@@ -44,8 +50,8 @@ public final class PermaPiola extends JavaPlugin {
     private DayManager dayManager;
     private HurricaneManager hurricaneManager;
     private DeathMessageManager deathMessageManager;
-    private pp.sheero.permapiola.discord.DiscordManager discordManager;
-    private pp.sheero.permapiola.dementialwheel.DementialWheelManager dementialWheelManager;
+    private DiscordManager discordManager;
+    private DementialWheelManager dementialWheelManager;
     private InactivityManager inactivityManager;
 
     // ==========================================================
@@ -75,7 +81,7 @@ public final class PermaPiola extends JavaPlugin {
         this.dementialWheelManager = new pp.sheero.permapiola.dementialwheel.DementialWheelManager(this, languageManager);
         this.dementialWheelManager.loadData();
         this.inactivityManager = new InactivityManager(this);
-        pp.sheero.permapiola.utils.LuckPermsUtils.registerListeners(this);
+        LuckPermsUtils.registerListeners(this);
 
         // 2. Registro de Listeners
         getLogger().info("Loading listeners...");
@@ -85,7 +91,6 @@ public final class PermaPiola extends JavaPlugin {
 
         // 3. Registro de Comandos (Antiguos Bukkit)
         getLogger().info("Loading commands...");
-        registerCommands();
 
         // 3.5 Registro de Comandos Modernos (Brigadier)
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
@@ -98,7 +103,8 @@ public final class PermaPiola extends JavaPlugin {
             ReplyCommand.register(event.registrar(), languageManager, emoteManager);
             ChatCommand.register(event.registrar(), chatManager, languageManager);
             StaffChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
-            pp.sheero.permapiola.teams.TeamChatCommand.register(event.registrar(), languageManager);
+            TeamChatCommand.register(event.registrar(), languageManager);
+            TeamCommand.register(event.registrar(), this, languageManager);
             HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
             BroadcastCommand.register(event.registrar(), languageManager, emoteManager);
             PermaPiolaCommand.register(event.registrar(), this, languageManager, emoteManager);
@@ -109,10 +115,12 @@ public final class PermaPiola extends JavaPlugin {
             PlayerIpCommand.register(event.registrar(), languageManager);
             RenameCommand.register(event.registrar(), languageManager);
             InventoryCommand.register(event.registrar(), languageManager);
-            pp.sheero.permapiola.hurricane.DeathMessageCommand.register(event.registrar(), this, languageManager);
-            pp.sheero.permapiola.dementialwheel.DementialWheelCommand.register(event.registrar(), dementialWheelManager, languageManager);
-            pp.sheero.permapiola.hurricane.HurricaneCommand.register(event.registrar(), hurricaneManager, languageManager);
+            DeathMessageCommand.register(event.registrar(), this, languageManager);
+            DementialWheelCommand.register(event.registrar(), dementialWheelManager, languageManager);
+            HurricaneCommand.register(event.registrar(), hurricaneManager, languageManager);
             SpectatorChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
+            TotemCommand.register(event.registrar(), totemManager, languageManager);
+            PlaytimeCommand.register(event.registrar(), playtimeManager, languageManager);
         });
 
         // 4. Tareas, Dependencias (ProtocolLib) y Carga de Datos Estáticos
@@ -179,22 +187,8 @@ public final class PermaPiola extends JavaPlugin {
         pm.registerEvents(this.inactivityManager, this);
 
         // Demential Wheel
-        pm.registerEvents(new pp.sheero.permapiola.dementialwheel.DementialWheelListener(this), this);
-        Bukkit.getScheduler().runTaskTimer(this, new pp.sheero.permapiola.dementialwheel.DementialWheelTask(this), 10L, 10L);
-    }
-
-    private void registerCommands() {
-        // Teams
-        getCommand("team").setExecutor(new TeamCommand(this, languageManager));
-        getCommand("team").setTabCompleter(new TeamCommand(this, languageManager));
-
-        // Playtime
-        getCommand("playtime").setExecutor(new PlaytimeCommand(this, playtimeManager, languageManager));
-        getCommand("playtime").setTabCompleter(new PlaytimeCommand(this, playtimeManager, languageManager));
-
-        // Totems
-        getCommand("totem").setExecutor(new TotemCommand(this, totemManager, languageManager));
-        getCommand("totem").setTabCompleter(new TotemCommand(this, totemManager, languageManager));
+        pm.registerEvents(new DementialWheelListener(this), this);
+        Bukkit.getScheduler().runTaskTimer(this, new DementialWheelTask(this), 10L, 10L);
     }
 
     // ==========================================================
@@ -209,8 +203,8 @@ public final class PermaPiola extends JavaPlugin {
     public DayManager getDayManager() { return dayManager; }
     public HurricaneManager getHurricaneManager() { return hurricaneManager; }
     public DeathMessageManager getDeathMessageManager() { return deathMessageManager; }
-    public pp.sheero.permapiola.discord.DiscordManager getDiscordManager() { return discordManager; }
-    public pp.sheero.permapiola.dementialwheel.DementialWheelManager getDementialWheelManager() { return dementialWheelManager; }
+    public DiscordManager getDiscordManager() { return discordManager; }
+    public DementialWheelManager getDementialWheelManager() { return dementialWheelManager; }
     public EmoteManager getEmoteManager() { return emoteManager; }
     public ChatManager getChatManager() { return chatManager; }
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }

@@ -9,16 +9,6 @@ softdepend: [DiscordSRV, ProtocolLib]
 
 authors: [ Sheero ]
 
-commands:
-  playtime:
-    description: Ver el tiempo de juego.
-    aliases: [ pt ]
-  team:
-    description: Comando principal de equipos.
-    aliases: [t]
-  totem:
-    description: Sistema de tótems y sonidos.
-
 permissions:
   permapiola.admin:
     description: Permiso base general y mensajes de entrada/salida de administradores.

@@ -6,9 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.scoreboard.Team;
 import pp.sheero.permapiola.PermaPiola;
-import pp.sheero.permapiola.teams.TeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
 
@@ -57,12 +55,6 @@ public class PlayerConnectionListener implements Listener {
         String prefix = LuckPermsUtils.getPrefix(player);
         String suffix = LuckPermsUtils.getSuffix(player);
 
-        Team team = TeamManager.getTeam(player);
-        if (team != null) {
-            prefix = LuckPermsUtils.cleanTeamTag(prefix, team);
-            suffix = LuckPermsUtils.cleanTeamTag(suffix, team);
-        }
-
         if (prefix == null) prefix = "";
         if (suffix == null) suffix = "";
 
@@ -103,12 +95,6 @@ public class PlayerConnectionListener implements Listener {
         String prefix = LuckPermsUtils.getPrefix(player);
         String suffix = LuckPermsUtils.getSuffix(player);
 
-        Team team = TeamManager.getTeam(player);
-        if (team != null) {
-            prefix = LuckPermsUtils.cleanTeamTag(prefix, team);
-            suffix = LuckPermsUtils.cleanTeamTag(suffix, team);
-        }
-
         if (prefix == null) prefix = "";
         if (suffix == null) suffix = "";
 
@@ -117,7 +103,6 @@ public class PlayerConnectionListener implements Listener {
             String consoleMsg = consoleRaw.replace("%player_prefix%", prefix)
                     .replace("%player_suffix%", suffix)
                     .replace("%player%", player.getName());
-            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleMsg));
         }
 
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {

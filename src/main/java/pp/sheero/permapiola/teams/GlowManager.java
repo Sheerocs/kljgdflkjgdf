@@ -42,8 +42,8 @@ public class GlowManager {
 
                     if (observer.equals(target)) return;
 
-                    org.bukkit.scoreboard.Team observerTeam = TeamManager.getTeam(observer);
-                    if (observerTeam == null || !observerTeam.hasEntry(target.getName())) return;
+                    PiolaTeam observerTeam = TeamManager.getTeam(observer);
+                    if (observerTeam == null || !observerTeam.hasMember(target.getUniqueId())) return;
 
                     PacketContainer clonedPacket = originalPacket.deepClone();
 

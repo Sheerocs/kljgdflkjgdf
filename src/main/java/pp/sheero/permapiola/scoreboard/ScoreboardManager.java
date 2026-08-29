@@ -9,11 +9,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.dementialwheel.DementialEventType;
 import pp.sheero.permapiola.core.LanguageManager;
+import pp.sheero.permapiola.teams.PiolaTeam;
 import pp.sheero.permapiola.teams.TeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
@@ -166,8 +166,8 @@ public class ScoreboardManager implements Listener {
         String tpsStr = String.valueOf(Math.round(Math.min(20.0, tpsVal) * 100.0) / 100.0);
         String finalTps = ((tpsVal >= 18.0) ? "&a" : (tpsVal >= 15.0) ? "&e" : "&c") + tpsStr;
 
-        Team playerTeam = TeamManager.getTeam(player);
-        String teamName = (playerTeam != null) ? PLAIN.serialize(playerTeam.displayName()) : "";
+        PiolaTeam playerTeam = TeamManager.getTeam(player);
+        String teamName = (playerTeam != null) ? playerTeam.getDisplayName() : "";
 
         board.updateTitle(SECTION.deserialize(ColorUtils.format(lang.getMsg(player, "scoreboard.title"))));
 
@@ -177,10 +177,11 @@ public class ScoreboardManager implements Listener {
             if (configLine.contains("%teammates_section%")) {
                 if (playerTeam != null) {
                     String memberFormat = lang.getMsg(player, "scoreboard.teammate-format");
-                    for (String memberName : playerTeam.getEntries()) {
-                        if (memberName.equals(player.getName())) continue;
 
-                        Player tm = Bukkit.getPlayerExact(memberName);
+                    for (UUID memberId : playerTeam.getMembers()) {
+                        if (memberId.equals(player.getUniqueId())) continue;
+
+                        Player tm = Bukkit.getPlayer(memberId);
                         if (tm != null && tm.isOnline()) {
                             double hpVal = Math.round(tm.getHealth() * 10.0) / 10.0;
                             int ping = tm.getPing();
