@@ -101,7 +101,6 @@ teams:
       - "&c /team create <name> &f- &rCreate a team!"
       - "&c /team invite <player> &f- &rInvite a player!"
       - "&c /team accept <player> &f- &rAccept an invitation"
-      - "&c /team leave &f- &rLeave your current team"
       - "&c /team location &f- &rSend your coordinates to the team"
       - "&c /team info &f- &rShow your team stats"
       - "&c /team tag <tag> &f- &rChange your team tag"
@@ -120,6 +119,7 @@ teams:
       - "&c /team spy &f- &rToggle spy mode"
   create:
     name-taken: "#ed2d2dThat team name is already in use!"
+    name-too-short: "#ed2d2dThe team name must be at least 3 characters long!"
     name-too-long: "#ed2d2dThe name cannot be longer than 16 characters!"
     name-too-long-default: "#ed2d2dYour rank does not allow teams longer than 8 characters!"
     restricted-colors:
@@ -129,7 +129,7 @@ teams:
       netherite: "#ed2d2dYou cannot use the colors &4\\&4#ed2d2d and &c\\&c#ed2d2d or special formatting."
     invalid-chars: "#ed2d2dOnly letters, numbers, and spaces are allowed."
     no-hex-colors: "#ed2d2dYou cannot use hexadecimal colors (#)."
-    success: "#18f523You have created the team #f2cc24%team%&a."
+    success: "#18f523You have created the team &r%team%#18f523."
   tag:
     too-long: "#ed2d2dThe tag is too long!"
     success: "#18f523The team tag has been changed to: &f%tag%"
@@ -138,10 +138,8 @@ teams:
   transfer:
     self: "#ed2d2dYou cannot transfer leadership to yourself!"
     not-in-team: "#ed2d2dThat player is not in your team!"
-    success: "#18f523Leadership has been transferred to &f%player%#18f523!"
+    success: "#18f523Leadership has been transferred to %player%#18f523!"
   leave:
-    success: "#ed2d2dYou have left the team."
-    broadcast: "%player_prefix%%player%%player_suffix% #ed2d2dleft the team."
     disbanded: "#ed2d2dYour team has been disbanded because the leader left."
   glow:
     disabled-dependency: "&cThe team vision command is temporarily disabled on the server."
@@ -154,15 +152,15 @@ teams:
     target-already-in-team: "#ed2d2dThat player is already in a team!"
     already-invited: "#ed2d2dYou have already invited this player!"
     already-in-your-team: "#ed2d2d%target% is already in the team"
-    sent: "#18f523You have invited %target_prefix%%target%%target_suffix% &ato your team."
-    received: "#f2cc24%player_prefix%%player%%player_suffix% #f2cc24has invited you to join their team!\n&eYou have #ed2d2d60 #f2cc24seconds to accept. &6Click here to join!"
+    sent: "#18f523You have invited %target_prefix%%target% &ato your team."
+    received: "#f2cc24%player_prefix%%player% #f2cc24has invited you to join their team!\n&eYou have #ed2d2d60 #f2cc24seconds to accept. &6Click here to join!"
     hover: "#f2cc24Click to execute\n&f/team accept %player%"
-    expired-sender: "#ed2d2dThe invitation for %target_prefix%%target%%target_suffix% #ed2d2dhas expired."
-    expired-target: "#ed2d2dThe invitation from %player_prefix%%player%%player_suffix% #ed2d2dhas expired."
+    expired-sender: "#ed2d2dThe invitation for %target_prefix%%target% #ed2d2dhas expired."
+    expired-target: "#ed2d2dThe invitation from %player_prefix%%player% #ed2d2dhas expired."
   accept:
     no-invite: "#ed2d2dYou do not have a pending invitation from that player!"
-    success: "#18f523You have joined the team of %player_prefix%%player%%player_suffix%#18f523!"
-    broadcast: "#f2cc24%new_member_prefix%%new_member%%new_member_suffix% #f2cc24has joined the team!"
+    success: "#18f523You have joined the team of %player_prefix%%player%#18f523!"
+    broadcast: "#f2cc24%new_member_prefix%%new_member% #f2cc24has joined the team!"
   memberlist:
     team-name: "#f2cc24Team name: &f%team%"
     tag: "#f2cc24Tag: &f%tag%"
@@ -171,7 +169,7 @@ teams:
     leader: "#f2cc24Team leader: %leader_info%"
     members-prefix: "#f2cc24Members: "
     members-separator: "&f, "
-    player-format: "%player_prefix%%player%%player_suffix% %status%"
+    player-format: "%player_prefix%%player% %status%"
     offline-player: "Unknown (Offline)"
     unknown-player: "Unknown"
     icons:
@@ -190,19 +188,19 @@ teams:
     reset-complete: "#18f523All teams have been successfully cleared!"
     size-status: "#f2cc24The member limit per team is now: &a%size%"
     size-already-same: "#ed2d2dThe member limit is already configured to &a%size%#ed2d2d."
-    forcejoin-success: "#18f523You have forced %player_prefix%%player%%player_suffix% #18f523to join the team %team%#18f523."
+    forcejoin-success: "#18f523You have forced %player_prefix%%player% #18f523to join the team %team%#18f523."
     forcejoin-target: "#f2cc24An administrator has forced you to join the team %team%#f2cc24."
-    forcejoin-broadcast: "#f2cc24An administrator has forced the entry of %player_prefix%%player%%player_suffix% #f2cc24into the team."
+    forcejoin-broadcast: "#f2cc24An administrator has forced the entry of %player_prefix%%player% #f2cc24into the team."
     forcejoin-other-already-different: "%player_prefix%%player% #ed2d2dis already in the team #f2cc24%current_team%#ed2d2d."
-    forceleave-success: "#ed2d2dYou have forced %player_prefix%%player%%player_suffix% #ed2d2dto leave their team."
+    forceleave-success: "#ed2d2dYou have forced %player_prefix%%player% #ed2d2dto leave their team."
     forceleave-target: "#ed2d2dAn administrator has forced you to leave your team."
-    forceleave-broadcast: "#f2cc24An administrator has removed %player_prefix%%player%%player_suffix% #f2cc24from the team."
+    forceleave-broadcast: "#f2cc24An administrator has removed %player_prefix%%player% #f2cc24from the team."
     forceleave-disbanded: "#ed2d2dAn administrator has forced the leader out. The team has been disbanded."
     forceleave-other-no-team: "%player_prefix%%player% #ed2d2dis not in any team."
     delete-success: "#18f523You have successfully deleted the team #f2cc24%team%#18f523."
     spy-toggled-on: "#18f523You have activated Spy mode."
     spy-toggled-off: "#ed2d2dYou have deactivated Spy mode."
-    spy-format: "&8[#ed2d2dSPY&8] &8[&b%team_name%&8] %player_prefix%%player%%player_suffix%&f: %message%"
+    spy-format: "&8[#ed2d2dSPY&8] &8[&b%team_name%&8] %player_prefix%%player%&f: %message%"
     lists-header: "    &3&lTeam List &7(Page %page%/%max_page%)"
     lists-team-format: "#f2cc24%index%. &f%team_name%"
     lists-leader: "  &bLeader: %leader%"
@@ -212,6 +210,56 @@ teams:
     lists-btn-next: "#18f523[Next >]"
     invalid-page: "#ed2d2dInvalid page! There are %max_page% pages."
     no-teams: "#ed2d2dThere are no teams created."
+
+reteam:
+  system-disabled: "#ed2d2dThe Reteam system is currently disabled."
+  already-in-reteam: "#ed2d2dYou are already part of an alliance!"
+  not-in-reteam: "#ed2d2dYou do not belong to any alliance!"
+  not-leader: "#ed2d2dOnly the alliance leader can use this command!"
+  help:
+    user:
+      - "&f      &eRETEAM HELP PAGE&f      "
+      - "&c /reteam invite <team> &f- &rPropose an alliance!"
+      - "&c /reteam accept <team> &f- &rAccept a proposal"
+      - "&c /reteam info &f- &rShow the alliance information"
+      - "&c /reteam tag <tag> &f- &rChange the alliance tag"
+      - "&c /reteam rename <name> &f- &rChange the alliance name"
+      - "&c /reteam transfer <player> &f- &rTransfer leadership"
+    staff:
+      - "&f      &eRETEAM HELP STAFF PAGE&f      "
+      - "&c /reteam system <on/off> &f- &rActivate or deactivate the event"
+      - "&c /reteam disband <alliance> &f- &rDisband an alliance"
+      - "&c /reteam list &f- &rShow all formed alliances"
+  invite:
+    cant-invite-self: "#ed2d2dYou cannot invite your own team!"
+    target-already-reteamed: "#ed2d2dThat team is already part of another alliance!"
+    already-invited: "#ed2d2dYou have already sent a request to that team!"
+    leader-offline: "#ed2d2dThe leader of that team is not online to receive the request!"
+    too-many-players: "#ed2d2dThe alliance would exceed the limit of 6 alive players! (Total: %sum%)"
+    sent: "#18f523You have sent an alliance request to team #f2cc24%team%&a."
+    received: "#f2cc24Team %team% has proposed an alliance!\n&eYou will be %sum% alive players in total. &6Click here to accept!"
+    hover: "#f2cc24Click to execute\n&f/reteam accept %team%"
+    expired-sender: "#ed2d2dThe alliance request for #f2cc24%target% #ed2d2dhas expired."
+    expired-target: "#ed2d2dThe alliance request from #f2cc24%player% #ed2d2dhas expired."
+  accept:
+    math-changed: "#ed2d2dThe alive player count changed and now exceeds the limit of 6!"
+    success: "#18f523You have successfully accepted the alliance!"
+    broadcast: "#f2cc24Our teams have merged! Use /reteam to manage the alliance."
+  info:
+    team-name: "#f2cc24Alliance: &f%team%"
+    tag: "#f2cc24Tag: &f%tag%"
+    original-teams: "#f2cc24Original Teams: &f%teams%"
+  rename:
+    success: "#18f523The alliance name has been changed to: &f%name%"
+  tag:
+    success: "#18f523The alliance tag has been changed to: &f%tag%"
+  transfer:
+    success: "#18f523Alliance leadership has been transferred to &f%player%#18f523!"
+  staff:
+    system-status: "#f2cc24The Reteam system has been changed to: %status%"
+    reteam-not-found: "#ed2d2dThe specified alliance does not exist!"
+    disband-success: "#18f523You have successfully disbanded alliance #f2cc24%team%#18f523."
+    disband-broadcast: "#ed2d2dAn administrator has disbanded this alliance. You have returned to normal."
 
 totems:
   self: "&cYour Used Totems\n&8&l-> &7Position: &c#%pos%\n&8&l-> &7Totems: &f%totems%"
@@ -283,11 +331,11 @@ quit:
 
 private:
   format-to:
-    donator: "&dTo %target_prefix%%target%%target_suffix%&f: %message%"
-    default: "&dTo %target_prefix%%target%%target_suffix%&7: %message%"
+    donator: "&dTo %target_prefix%%target%&f: %message%"
+    default: "&dTo %target_prefix%%target%&7: %message%"
   format-from:
-    donator: "&dFrom %sender_prefix%%sender%%sender_suffix%&f: %message%"
-    default: "&dFrom %sender_prefix%%sender%%sender_suffix%&7: %message%"
+    donator: "&dFrom %sender_prefix%%sender%&f: %message%"
+    default: "&dFrom %sender_prefix%%sender%&7: %message%"
 
 scoreboard:
   title: "&4☠ #ed2d2d&lPermaPiola 2 T6 &4☠"
@@ -324,6 +372,7 @@ combatlog:
 inactivity:
   death-message: "%player% died from inactivity"
   safe-message: "#32CD32[PermaPiola] You have reached the required playtime! Your inactivity time has been reset."
+  death-hover: "&c&l☠ Death Details ☠\n&8&l-> &7Cause: &f%cause%"
 
 commands:
   generic:
@@ -346,6 +395,7 @@ commands:
     no-item: "#ed2d2dYou must hold an item in your hand to rename it!"
   revive:
     not-dead: "#ed2d2dThat player is not dead."
+    player-offline: "#ed2d2dThat player is offline or does not exist. They must be online to be revived."
     success: "#18f523You have successfully revived %player%."
     staff-alert: "&8[&aRevive&8] &7Administrator &f%admin% &7has revived &f%player%&7."
   chat:
@@ -385,6 +435,13 @@ commands:
     format: "#ed2d2d[HelpOp] %player_format%&f: %message%"
   reply:
     no-target: "#ed2d2dYou have no one to reply to."
+  inactivity:
+    log-header: "&8[&cInactivity&8] &7Incomplete sessions history for &c%player%&7:"
+    log-entry: "&8&l-> &7Joined: &f%login% &8| &7Left: &f%logout% &8| &7Duration: &f%duration%"
+    log-empty: "&cThis player has no incomplete sessions registered."
+    restore-success: "&aPlayer &f%player% &ahas been restored and their inactivity timer reset."
+    restore-not-banned: "&cThis player did not die from inactivity."
+    invalid-player: "&cPlayer not found in records."
   dementialwheel:
     already-rolling: "#d11d41PermaPiola &8&l>> #c41a36The wheel is already rolling or has active events."
     start: "#d11d41PermaPiola &8&l>> #93c47dDemential Wheel sequence started manually."

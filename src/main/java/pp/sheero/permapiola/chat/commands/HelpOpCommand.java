@@ -10,10 +10,10 @@ import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
+import pp.sheero.permapiola.chat.ChatListener;
 import pp.sheero.permapiola.chat.EmoteManager;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
-import pp.sheero.permapiola.utils.LuckPermsUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,6 @@ public class HelpOpCommand {
     public static void register(Commands commands, PermaPiola plugin, LanguageManager lang, EmoteManager emoteManager) {
 
         var helpopNode = Commands.literal("helpop")
-
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes(context -> {
                             CommandSender sender = context.getSource().getSender();
@@ -61,17 +60,17 @@ public class HelpOpCommand {
                                     ? ColorUtils.format("&f" + rawMessage)
                                     : rawMessage;
 
-                            String prefix = LuckPermsUtils.getPrefix(pSender);
-                            String suffix = LuckPermsUtils.getSuffix(pSender);
-                            String senderFormat = (prefix != null ? prefix : "") + pSender.getName() + (suffix != null ? suffix : "");
+                            String tag = ChatListener.getPlayerTag(pSender);
+                            String nameColor = ChatListener.getPlayerNameColor(pSender, plugin);
+                            String senderFormat = tag + nameColor + pSender.getName();
 
                             String formatBase = lang.getMsg(pSender, "commands.helpop.format");
-
                             String coloredFormatBase = ColorUtils.format(formatBase.replace("%player_format%", senderFormat));
-
                             String fullMessage = coloredFormatBase.replace("%message%", finalMessageText);
 
                             pSender.sendMessage(fullMessage);
+
+                            Bukkit.getConsoleSender().sendMessage(fullMessage);
 
                             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                                 if (onlinePlayer.hasPermission("permapiola.admin.helpop") && !onlinePlayer.equals(pSender)) {

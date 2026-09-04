@@ -9,6 +9,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.teams.TeamManager;
+import pp.sheero.permapiola.teams.ReTeamManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
 import pp.sheero.permapiola.hurricane.DeathStateManager;
@@ -25,6 +26,31 @@ public class ChatListener implements Listener {
         this.chatManager = chatManager;
         this.lang = lang;
         this.emoteManager = emoteManager;
+    }
+
+    public static String getPlayerNameColor(Player player, PermaPiola plugin) {
+        String defaultColor = plugin.getConfig().getString("rank-colors.default", "&#44D889");
+        try {
+            net.luckperms.api.LuckPerms api = net.luckperms.api.LuckPermsProvider.get();
+            net.luckperms.api.model.user.User user = api.getUserManager().getUser(player.getUniqueId());
+            if (user != null) {
+                String group = user.getPrimaryGroup();
+                return plugin.getConfig().getString("rank-colors." + group, defaultColor);
+            }
+        } catch (Exception ignored) {
+        }
+        return defaultColor;
+    }
+
+    public static String getPlayerTag(Player player) {
+        if (ReTeamManager.hasReTeam(player)) {
+            return ReTeamManager.getReTeam(player).getTag() + " ";
+        } else if (TeamManager.hasTeam(player)) {
+            return TeamManager.getTeam(player).getTag() + " ";
+        } else {
+            String lpPrefix = LuckPermsUtils.getPrefix(player);
+            return (lpPrefix != null && !lpPrefix.isEmpty()) ? lpPrefix + "" : "";
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -50,17 +76,25 @@ public class ChatListener implements Listener {
             }
         }
 
+        String tag = getPlayerTag(player);
+        String nameColor = getPlayerNameColor(player, plugin);
+        String formattedName = nameColor + player.getName();
+
         if (channel == ChatChannel.STAFF) {
             event.setCancelled(true);
             chatManager.sendStaffMessage(player, message);
+
         } else if (channel == ChatChannel.TEAM) {
             event.setCancelled(true);
-            if (TeamManager.hasTeam(player)) {
+            if (ReTeamManager.hasReTeam(player)) {
+                ReTeamManager.sendReTeamChatMessage(player, message, lang);
+            } else if (TeamManager.hasTeam(player)) {
                 TeamManager.sendTeamChatMessage(player, message, lang);
             } else {
                 player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.not-in-team")));
                 chatManager.setChannel(player, ChatChannel.ALL);
             }
+
         } else if (channel == ChatChannel.SPEC) {
             event.setCancelled(true);
 
@@ -68,39 +102,38 @@ public class ChatListener implements Listener {
                     ? chatManager.getSpecFormatDonator()
                     : chatManager.getSpecFormatDefault();
 
-            String prefix = LuckPermsUtils.getPrefix(player);
-            String suffix = LuckPermsUtils.getSuffix(player);
-
             String formattedMessageText = player.hasPermission("permapiola.donor.color") ? ColorUtils.format(message) : message;
 
-            String finalFormat = format.replace("%player_prefix%", prefix != null ? prefix : "")
-                    .replace("%player_suffix%", suffix != null ? suffix : "")
-                    .replace("%player%", player.getName())
-                    .replace("%message%", formattedMessageText);
+            String baseFormat = ColorUtils.format(format
+                    .replace("%player_prefix%", tag)
+                    .replace("%player%", formattedName));
 
-            String coloredMessage = ColorUtils.format(finalFormat);
+            String coloredMessage = baseFormat.replace("%message%", formattedMessageText);
+
+            Bukkit.getConsoleSender().sendMessage(coloredMessage);
 
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (DeathStateManager.isDead(p.getUniqueId()) || p.hasPermission("permapiola.admin") || p.hasPermission("permapiola.staff")) {
                     p.sendMessage(coloredMessage);
                 }
             }
+
         } else {
             String format = player.hasPermission("permapiola.donor.color")
                     ? chatManager.getGlobalFormatDonator()
                     : chatManager.getGlobalFormatDefault();
 
-            String prefix = LuckPermsUtils.getPrefix(player);
-            String suffix = LuckPermsUtils.getSuffix(player);
-
-            String finalFormat = format.replace("%player_prefix%", prefix != null ? prefix : "")
-                    .replace("%player_suffix%", suffix != null ? suffix : "")
-                    .replace("%player%", player.getName())
+            String finalFormat = format
+                    .replace("%player_prefix%", tag)
+                    .replace("%player%", formattedName)
                     .replace("%message%", "%2$s");
 
             event.setFormat(ColorUtils.format(finalFormat));
+
             if (player.hasPermission("permapiola.donor.color")) {
                 event.setMessage(ColorUtils.format(message));
+            } else {
+                event.setMessage(message);
             }
         }
     }

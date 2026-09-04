@@ -169,6 +169,47 @@ public class DiscordManager {
         });
     }
 
+    public void sendOfflineDeathEmbed(UUID victimUUID, String victimName, String cause, int deathNumber, int currentDay) {
+        if (!isDiscordSRVLoaded || !discordEnabled) return;
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                TextChannel channel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(channelName);
+                if (channel == null) return;
+
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.setTitle(embedTitle.replace("%victim%", victimName));
+                embed.setColor(embedColor);
+                embed.setThumbnail("https://mc-heads.net/avatar/" + victimUUID + "/100");
+
+                String description = dayAndDeathFormat
+                        .replace("%day%", String.valueOf(currentDay))
+                        .replace("%death_number%", String.valueOf(deathNumber));
+                embed.setDescription(description + "\n\n");
+
+                embed.addField(causeTitle, cause, false);
+
+                if (plugin.getDeathMessageManager().hasMessage(victimUUID)) {
+                    String customMsg = plugin.getDeathMessageManager().getMessage(victimUUID);
+                    String wrappedMsg = wrapText(customMsg, 50);
+                    embed.addField(deathMsgTitle, wrappedMsg, false);
+                }
+
+                java.time.LocalDateTime now = java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
+                String dateStr = now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+                embed.setFooter(dateStr);
+
+                channel.sendMessageEmbeds(embed.build()).queue(message -> {
+                    DeathStateManager.setDiscordMessageId(victimUUID, message.getId());
+                });
+
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error al enviar el embed offline a Discord: " + e.getMessage());
+            }
+        });
+    }
+
     public void sendReviveEmbed(Player victim) {
         if (!isDiscordSRVLoaded || !discordEnabled) return;
 

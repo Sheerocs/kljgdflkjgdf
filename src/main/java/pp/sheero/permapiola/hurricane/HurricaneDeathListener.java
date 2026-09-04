@@ -17,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.core.LanguageManager;
+import pp.sheero.permapiola.dementialwheel.DementialEventType;
 import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.time.LocalDateTime;
@@ -125,17 +126,27 @@ public class HurricaneDeathListener implements Listener {
 
         plugin.getHurricaneManager().addHurricaneTime();
 
-        if (!wasActive) {
-            plugin.getDementialWheelManager().startSequence(victim);
-        } else {
-            String worldName = victim.getWorld().getName();
-            boolean isNetherOrEnd = worldName.endsWith("_nether") || worldName.endsWith("_the_end");
+        boolean hasAvailableEvents = false;
+        for (DementialEventType type : DementialEventType.values()) {
+            if (type != DementialEventType.NONE && !plugin.getDementialWheelManager().hasEvent(type)) {
+                hasAvailableEvents = true;
+                break;
+            }
+        }
 
-            double chance = isNetherOrEnd ? this.extraSpinChanceOtherCache : this.extraSpinChanceOverworldCache;
+        if (hasAvailableEvents) {
+            if (!wasActive) {
+                plugin.getDementialWheelManager().startSequence(victim);
+            } else {
+                String worldName = victim.getWorld().getName();
+                boolean isNetherOrEnd = worldName.endsWith("_nether") || worldName.endsWith("_the_end");
 
-            if (Math.random() <= chance) {
-                long eventDuration = isNetherOrEnd ? addedSeconds : (addedSeconds / 2);
-                plugin.getDementialWheelManager().startExtraSequence(victim, eventDuration);
+                double chance = isNetherOrEnd ? this.extraSpinChanceOtherCache : this.extraSpinChanceOverworldCache;
+
+                if (Math.random() <= chance) {
+                    long eventDuration = isNetherOrEnd ? addedSeconds : (addedSeconds / 2);
+                    plugin.getDementialWheelManager().startExtraSequence(victim, eventDuration);
+                }
             }
         }
 

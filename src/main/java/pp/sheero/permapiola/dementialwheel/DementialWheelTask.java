@@ -36,24 +36,26 @@ public class DementialWheelTask implements Runnable {
 
             // 3. EVENTO: ACID RAIN
             if (manager.hasEvent(DementialEventType.ACID_RAIN)) {
-                boolean inWater = p.isInWater();
-                boolean exposedToRain = false;
+                if (p.getWorld().getName().equals("world")) {
+                    boolean inWater = p.isInWater();
+                    boolean exposedToRain = false;
 
-                if (p.getWorld().hasStorm()) {
-                    int highestBlockY = p.getWorld().getHighestBlockYAt(p.getLocation());
-                    if (p.getLocation().getY() >= highestBlockY) {
-                        exposedToRain = true;
+                    if (p.getWorld().hasStorm()) {
+                        int highestBlockY = p.getWorld().getHighestBlockYAt(p.getLocation());
+                        if (p.getLocation().getY() >= highestBlockY) {
+                            exposedToRain = true;
+                        }
                     }
-                }
 
-                if (inWater || exposedToRain) {
-                    double damage = manager.getAcidRainDamage();
+                    if (inWater || exposedToRain) {
+                        double damage = manager.getAcidRainDamage();
 
-                    p.setMetadata("DementialDamage", new FixedMetadataValue(plugin, "Acid Rain"));
-                    try {
-                        p.damage(damage);
-                    } finally {
-                        p.removeMetadata("DementialDamage", plugin);
+                        p.setMetadata("DementialDamage", new FixedMetadataValue(plugin, "Acid Rain"));
+                        try {
+                            p.damage(damage);
+                        } finally {
+                            p.removeMetadata("DementialDamage", plugin);
+                        }
                     }
                 }
             }

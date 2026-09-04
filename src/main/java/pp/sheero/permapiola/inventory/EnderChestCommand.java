@@ -1,10 +1,8 @@
 package pp.sheero.permapiola.inventory;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -15,7 +13,6 @@ import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class EnderChestCommand {
 
@@ -37,7 +34,16 @@ public class EnderChestCommand {
                     return Command.SINGLE_SUCCESS;
                 })
 
-                .then(Commands.argument("target", ArgumentTypes.player())
+                .then(Commands.argument("target", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            String input = builder.getRemaining().toLowerCase();
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                if (p.getName().toLowerCase().startsWith(input)) {
+                                    builder.suggest(p.getName());
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> {
                             CommandSender sender = context.getSource().getSender();
 
@@ -47,33 +53,25 @@ public class EnderChestCommand {
                             }
 
                             Player pSender = (Player) sender;
-                            PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
+                            String targetName = context.getArgument("target", String.class);
+                            Player target = Bukkit.getPlayer(targetName);
 
-                            try {
-                                List<Player> targets = resolver.resolve(context.getSource());
-
-                                if (targets.isEmpty()) {
-                                    sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
-                                    return Command.SINGLE_SUCCESS;
-                                }
-
-                                Player target = targets.get(0);
-
-                                if (target.equals(pSender)) {
-                                    openSelfEnderChest(pSender, lang);
-                                    return Command.SINGLE_SUCCESS;
-                                }
-
-                                String rawTitle = lang.getMsg(pSender, "commands.echest.gui-title").replace("%player%", target.getName());
-                                org.bukkit.inventory.Inventory gui = Bukkit.createInventory(null, 27, ColorUtils.format(rawTitle));
-
-                                gui.setContents(target.getEnderChest().getContents());
-                                pSender.openInventory(gui);
-                                pSender.playSound(pSender.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
-
-                            } catch (CommandSyntaxException e) {
-                                sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                            if (target == null) {
+                                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
+                                return Command.SINGLE_SUCCESS;
                             }
+
+                            if (target.equals(pSender)) {
+                                openSelfEnderChest(pSender, lang);
+                                return Command.SINGLE_SUCCESS;
+                            }
+
+                            String rawTitle = lang.getMsg(pSender, "commands.echest.gui-title").replace("%player%", target.getName());
+                            org.bukkit.inventory.Inventory gui = Bukkit.createInventory(null, 27, ColorUtils.format(rawTitle));
+
+                            gui.setContents(target.getEnderChest().getContents());
+                            pSender.openInventory(gui);
+                            pSender.playSound(pSender.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
 
                             return Command.SINGLE_SUCCESS;
                         })

@@ -1,12 +1,9 @@
 package pp.sheero.permapiola.commands;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import pp.sheero.permapiola.core.LanguageManager;
@@ -14,7 +11,6 @@ import pp.sheero.permapiola.utils.ColorUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.List;
 
 public class PlayerIpCommand {
 
@@ -23,34 +19,36 @@ public class PlayerIpCommand {
         var ipNode = Commands.literal("playerip")
                 .requires(source -> source.getSender().hasPermission("permapiola.admin.playerip"))
 
-                .then(Commands.argument("target", ArgumentTypes.player())
+                .then(Commands.argument("target", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            String input = builder.getRemaining().toLowerCase();
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                if (p.getName().toLowerCase().startsWith(input)) {
+                                    builder.suggest(p.getName());
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> {
                             CommandSender sender = context.getSource().getSender();
-                            PlayerSelectorArgumentResolver resolver = context.getArgument("target", PlayerSelectorArgumentResolver.class);
+                            String targetName = context.getArgument("target", String.class);
+                            Player target = Bukkit.getPlayer(targetName);
 
-                            try {
-                                List<Player> targets = resolver.resolve(context.getSource());
+                            if (target == null) {
+                                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.generic.player-offline")));
+                                return Command.SINGLE_SUCCESS;
+                            }
 
-                                if (targets.isEmpty()) {
-                                    sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
-                                    return Command.SINGLE_SUCCESS;
-                                }
+                            InetSocketAddress address = target.getAddress();
 
-                                Player target = targets.get(0);
-                                InetSocketAddress address = target.getAddress();
-
-                                if (address != null && address.getAddress() != null) {
-                                    String cleanIp = address.getAddress().getHostAddress();
-                                    String successMsg = lang.getMsg(sender, "commands.playerip.success")
-                                            .replace("%player%", target.getName())
-                                            .replace("%ip%", cleanIp);
-                                    sender.sendMessage(ColorUtils.format(successMsg));
-                                } else {
-                                    sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.playerip.error")));
-                                }
-
-                            } catch (CommandSyntaxException e) {
-                                sender.sendMessage(Component.translatable("argument.entity.notfound.player").color(NamedTextColor.RED));
+                            if (address != null && address.getAddress() != null) {
+                                String cleanIp = address.getAddress().getHostAddress();
+                                String successMsg = lang.getMsg(sender, "commands.playerip.success")
+                                        .replace("%player%", target.getName())
+                                        .replace("%ip%", cleanIp);
+                                sender.sendMessage(ColorUtils.format(successMsg));
+                            } else {
+                                sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "commands.playerip.error")));
                             }
 
                             return Command.SINGLE_SUCCESS;

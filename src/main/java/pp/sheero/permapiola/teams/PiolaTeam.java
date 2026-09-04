@@ -64,11 +64,10 @@ public class PiolaTeam {
     public boolean isFull() { return this.members.size() >= this.maxSize; }
 
     public void broadcast(String message) {
-        String formatted = ColorUtils.format(message);
         for (UUID memberUuid : members) {
             Player p = Bukkit.getPlayer(memberUuid);
             if (p != null && p.isOnline()) {
-                p.sendMessage(formatted);
+                p.sendMessage(message);
             }
         }
     }
@@ -97,7 +96,7 @@ public class PiolaTeam {
                     .replace("%old_leader%", oldName)
                     .replace("%new_leader%", newName);
 
-            broadcast(rawMsg);
+            broadcast(ColorUtils.format(rawMsg));
         }
     }
 

@@ -6,6 +6,8 @@ import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
+import pp.sheero.permapiola.utils.LuckPermsUtils;
+import pp.sheero.permapiola.utils.TimeUtils;
 
 import java.io.File;
 import java.util.*;
@@ -26,7 +28,7 @@ public class TeamManager {
         org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
         teamsEnabled = config.getBoolean("teams.enabled", true);
         defaultMaxSize = config.getInt("teams.max-size", 6);
-        teamChatFormat = config.getString("chat.team-format", "&8[&bTeamChat&8] &7%player_format%&f: %message%");
+        teamChatFormat = config.getString("chat.team-format", "&8[&bTeamChat&8] %player_prefix%%player%&f: %message%");
     }
 
     public static boolean isTeamsEnabled() { return teamsEnabled; }
@@ -148,17 +150,26 @@ public class TeamManager {
         PiolaTeam team = getTeam(sender);
         if (team == null) return;
 
-        String format = teamChatFormat
-                .replace("%player_format%", sender.getName())
-                .replace("%message%", message);
+        String formattedMessageText = sender.hasPermission("permapiola.donor.color") ? ColorUtils.format(message) : message;
 
-        team.broadcast(format);
+        String prefix = LuckPermsUtils.getPrefix(sender);
+        if (prefix == null) prefix = "";
+
+        String baseFormat = ColorUtils.format(teamChatFormat
+                .replace("%player_prefix%", prefix)
+                .replace("%player%", sender.getName()));
+
+        String finalMessage = baseFormat.replace("%message%", formattedMessageText);
+
+        team.broadcast(finalMessage);
 
         String spyFormatRaw = languageManager.getMsg(Bukkit.getConsoleSender(), "teams.staff.spy-format");
-        String spyMessage = ColorUtils.format(spyFormatRaw
+        String spyBase = ColorUtils.format(spyFormatRaw
                 .replace("%team_name%", team.getDisplayName())
-                .replace("%player_format%", sender.getName())
-                .replace("%message%", message));
+                .replace("%player_prefix%", prefix)
+                .replace("%player%", sender.getName()));
+
+        String spyMessage = spyBase.replace("%message%", formattedMessageText);
 
         Bukkit.getConsoleSender().sendMessage(spyMessage.replace("&8[&cSPY&8] ", ""));
 
@@ -177,11 +188,14 @@ public class TeamManager {
         File dataFolder = new File(plugin.getDataFolder(), "data");
         if (!dataFolder.exists()) dataFolder.mkdirs();
 
-        File spyFile = new File(dataFolder, "team_spy_data.yml");
+        File spyFile = new File(dataFolder, "team_spy.yml");
         YamlConfiguration spyConfig = new YamlConfiguration();
-        List<String> spySnapshot = new ArrayList<>();
-        for (UUID uuid : spyPlayers) spySnapshot.add(uuid.toString());
-        spyConfig.set("spy-players", spySnapshot);
+        for (UUID uuid : spyPlayers) {
+            Player p = Bukkit.getPlayer(uuid);
+            String name = p != null ? p.getName() : Bukkit.getOfflinePlayer(uuid).getName();
+            if (name == null) name = "Desconocido";
+            spyConfig.set("spy-players." + uuid.toString(), name);
+        }
         try { spyConfig.save(spyFile); } catch (Exception ignored) {}
 
         File teamsFile = new File(dataFolder, "teams.yml");
@@ -193,8 +207,11 @@ public class TeamManager {
             teamsConfig.set(path + ".displayName", team.getDisplayName());
             teamsConfig.set(path + ".tag", team.getTag());
             teamsConfig.set(path + ".leader", team.getLeader().toString());
-            teamsConfig.set(path + ".maxSize", team.getMaxSize());
+
             teamsConfig.set(path + ".totalPlaytime", team.getTotalPlaytime());
+            String formattedPlaytime = TimeUtils.formatTime(team.getTotalPlaytime(), "w", "d", "h", "m", "s");
+            teamsConfig.set(path + ".totalPlaytime_formatted", formattedPlaytime);
+
             teamsConfig.set(path + ".totalTotems", team.getTotalTotems());
 
             for (UUID memberUuid : team.getMembers()) {
@@ -217,12 +234,14 @@ public class TeamManager {
     public static void loadData(PermaPiola plugin) {
         File dataFolder = new File(plugin.getDataFolder(), "data");
 
-        File spyFile = new File(dataFolder, "team_spy_data.yml");
+        File spyFile = new File(dataFolder, "team_spy.yml");
         if (spyFile.exists()) {
             YamlConfiguration spyConfig = YamlConfiguration.loadConfiguration(spyFile);
             spyPlayers.clear();
-            for (String uuidStr : spyConfig.getStringList("spy-players")) {
-                try { spyPlayers.add(UUID.fromString(uuidStr)); } catch (Exception ignored) {}
+            if (spyConfig.contains("spy-players")) {
+                for (String uuidStr : spyConfig.getConfigurationSection("spy-players").getKeys(false)) {
+                    try { spyPlayers.add(UUID.fromString(uuidStr)); } catch (Exception ignored) {}
+                }
             }
         }
 
@@ -242,7 +261,9 @@ public class TeamManager {
                         String displayName = teamsConfig.getString(path + ".displayName");
                         String tag = teamsConfig.getString(path + ".tag");
                         UUID leader = UUID.fromString(teamsConfig.getString(path + ".leader"));
-                        int maxSize = teamsConfig.getInt(path + ".maxSize", defaultMaxSize);
+
+                        int maxSize = defaultMaxSize;
+
                         long totalPlaytime = teamsConfig.getLong(path + ".totalPlaytime", 0L);
                         int totalTotems = teamsConfig.getInt(path + ".totalTotems", 0);
 

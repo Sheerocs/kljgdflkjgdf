@@ -38,6 +38,34 @@ discord:
     description: "**A Misenba le encanta la money.**"
 
 # ============================================================= #
+#            COLORES DE JUGADORES (SEGÚN LUCKPERMS)             #
+# ============================================================= #
+# El nombre de la clave debe coincidir con el nombre del grupo en LuckPerms.
+rank-colors:
+  owner: "&4&o"
+  co-owner: "&c&o"
+  admin: "&d"
+  staff: "#8E71DF"
+  netherite: "#c505c4"
+  diamond: "#32e0e3"
+  gold: "#f2cc24"
+  default: "#44D889"
+
+# ========================================== #
+#   PESOS DE RANGOS PARA ORDENAMIENTO (TAB)  #
+# ========================================== #
+# El orden es alfabético. La 'a' es la posición más alta, la 'z' la más baja.
+rank-weights:
+  owner: "a"
+  co-owner: "b"
+  admin: "c"
+  staff: "d"
+  netherite: "e"
+  diamond: "f"
+  gold: "g"
+  default: "z"
+
+# ============================================================= #
 #                           HURRICANE                           #
 # ============================================================= #
 
@@ -79,7 +107,7 @@ demential-wheel:
 # ============================================================= #
 teams:
   enabled: true
-  friendly-fire: false
+  reteam: false
   max-size: 6
 
 # ============================================================= #
@@ -138,12 +166,12 @@ server-list:
 
 chat:
   global-format:
-    donator: "%player_prefix%%player%%player_suffix%&f: %message%"
-    default: "%player_prefix%%player%%player_suffix%&7: %message%"
+    donator: "%player_prefix%%player%&f: %message%"
+    default: "%player_prefix%%player%&7: %message%"
   spec-format:
     default: "&8[&7Spec&8] %player_prefix%%player%&7: %message%"
     donator: "&8[&7Spec&8] %player_prefix%%player%&f: %message%"
-  team-format: "&8[&bTeamChat&8] %player_prefix%%player%%player_suffix%&f: %message%"
+  team-format: "&8[&bTeamChat&8] %player_prefix%%player%&f: %message%"
   staff-format: "&4[StaffChat] &f%player_prefix%%player%&f: %message%"
   override:
     enabled: true

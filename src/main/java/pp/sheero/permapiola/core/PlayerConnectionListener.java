@@ -7,6 +7,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import pp.sheero.permapiola.PermaPiola;
+import pp.sheero.permapiola.teams.TabManager;
 import pp.sheero.permapiola.utils.ColorUtils;
 import pp.sheero.permapiola.utils.LuckPermsUtils;
 
@@ -44,6 +45,12 @@ public class PlayerConnectionListener implements Listener {
         }
 
         event.setJoinMessage(null);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) {
+                TabManager.updatePlayerTab(player, plugin);
+            }
+        }, 10L);
 
         String messagePath;
         if (player.hasPermission("permapiola.admin") || player.hasPermission("permapiola.donor")) {
@@ -103,6 +110,8 @@ public class PlayerConnectionListener implements Listener {
             String consoleMsg = consoleRaw.replace("%player_prefix%", prefix)
                     .replace("%player_suffix%", suffix)
                     .replace("%player%", player.getName());
+
+            Bukkit.getConsoleSender().sendMessage(ColorUtils.format(consoleMsg));
         }
 
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {

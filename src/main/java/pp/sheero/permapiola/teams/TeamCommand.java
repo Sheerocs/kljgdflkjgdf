@@ -18,11 +18,13 @@ import org.bukkit.entity.Player;
 import pp.sheero.permapiola.PermaPiola;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.utils.ColorUtils;
+import pp.sheero.permapiola.utils.LuckPermsUtils;
 import pp.sheero.permapiola.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class TeamCommand {
@@ -46,20 +48,48 @@ public class TeamCommand {
                 )
         );
 
-        teamNode.then(Commands.literal("leave").executes(context -> executeLeave(context, plugin, lang)));
-
         teamNode.then(Commands.literal("info").executes(context -> executeInfo(context, plugin, lang)));
 
         teamNode.then(Commands.literal("location").executes(context -> executeLocation(context, plugin, lang)));
 
         teamNode.then(Commands.literal("invite")
-                .then(Commands.argument("target", ArgumentTypes.player())
+                .then(Commands.argument("target", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            if (!(context.getSource().getExecutor() instanceof Player)) return builder.buildFuture();
+                            Player p = (Player) context.getSource().getExecutor();
+                            PiolaTeam team = TeamManager.getTeam(p);
+                            String input = builder.getRemaining().toLowerCase();
+
+                            for (Player online : Bukkit.getOnlinePlayers()) {
+                                if (online.equals(p)) continue;
+                                if (team != null && team.hasMember(online.getUniqueId())) continue;
+
+                                if (online.getName().toLowerCase().startsWith(input)) {
+                                    builder.suggest(online.getName());
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> executeInvite(context, plugin, lang))
                 )
         );
 
         teamNode.then(Commands.literal("accept")
-                .then(Commands.argument("target", ArgumentTypes.player())
+                .then(Commands.argument("target", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            if (!(context.getSource().getExecutor() instanceof Player)) return builder.buildFuture();
+                            Player p = (Player) context.getSource().getExecutor();
+                            String input = builder.getRemaining().toLowerCase();
+
+                            for (Player online : Bukkit.getOnlinePlayers()) {
+                                if (TeamManager.hasInvite(online, p)) {
+                                    if (online.getName().toLowerCase().startsWith(input)) {
+                                        builder.suggest(online.getName());
+                                    }
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> executeAccept(context, plugin, lang))
                 )
         );
@@ -77,7 +107,27 @@ public class TeamCommand {
         );
 
         teamNode.then(Commands.literal("transfer")
-                .then(Commands.argument("target", ArgumentTypes.player())
+                .then(Commands.argument("target", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            if (!(context.getSource().getExecutor() instanceof Player)) return builder.buildFuture();
+                            Player p = (Player) context.getSource().getExecutor();
+                            PiolaTeam team = TeamManager.getTeam(p);
+
+                            if (team != null && team.isLeader(p.getUniqueId())) {
+                                String input = builder.getRemaining().toLowerCase();
+                                for (java.util.UUID memberId : team.getMembers()) {
+                                    if (memberId.equals(p.getUniqueId())) continue;
+
+                                    Player memberPlayer = Bukkit.getPlayer(memberId);
+                                    String name = memberPlayer != null ? memberPlayer.getName() : Bukkit.getOfflinePlayer(memberId).getName();
+
+                                    if (name != null && name.toLowerCase().startsWith(input)) {
+                                        builder.suggest(name);
+                                    }
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> executeTransfer(context, plugin, lang))
                 )
         );
@@ -132,6 +182,16 @@ public class TeamCommand {
                             return builder.buildFuture();
                         })
                         .then(Commands.argument("target", ArgumentTypes.player())
+                                .suggests((context, builder) -> {
+                                    String input = builder.getRemaining().toLowerCase();
+                                    for (Player p : Bukkit.getOnlinePlayers()) {
+                                        // Sugiere solo jugadores que NO tengan equipo
+                                        if (!TeamManager.hasTeam(p) && p.getName().toLowerCase().startsWith(input)) {
+                                            builder.suggest(p.getName());
+                                        }
+                                    }
+                                    return builder.buildFuture();
+                                })
                                 .executes(context -> executeForceJoin(context, plugin, lang))
                         )
                 )
@@ -140,6 +200,16 @@ public class TeamCommand {
         teamNode.then(Commands.literal("forceleave")
                 .requires(source -> source.getSender().hasPermission("permapiola.admin.team.forceleave"))
                 .then(Commands.argument("target", ArgumentTypes.player())
+                        .suggests((context, builder) -> {
+                            String input = builder.getRemaining().toLowerCase();
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                // Sugiere solo jugadores que SÍ tengan equipo
+                                if (TeamManager.hasTeam(p) && p.getName().toLowerCase().startsWith(input)) {
+                                    builder.suggest(p.getName());
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
                         .executes(context -> executeForceLeave(context, plugin, lang))
                 )
         );
@@ -159,10 +229,6 @@ public class TeamCommand {
 
         commands.register(teamNode.build(), "Gestión del sistema de equipos de PermaPiola");
     }
-
-    // ========================================================================
-    //                         MÉTODOS UTILITARIOS
-    // ========================================================================
 
     private static void sendFramedMessage(CommandSender sender, String rawMessage, LanguageManager lang) {
         String line = lang.getMsg(sender, "commands.generic.line");
@@ -196,8 +262,7 @@ public class TeamCommand {
             }
         } catch (Exception ignored) {}
 
-        List<Character> restrictedColors = new ArrayList<>(java.util.Arrays.asList('r', 'l', 'o', 'n', 'm', 'k', '4', 'c', '5', 'b', '6'));
-
+        List<Character> restrictedColors = new ArrayList<>(Arrays.asList('r', 'l', 'o', 'n', 'm', 'k', '4', 'c', '5', 'b', '6'));
         String langPath = "teams.create.restricted-colors.default";
 
         if (isNetherite) {
@@ -223,9 +288,38 @@ public class TeamCommand {
         return null;
     }
 
-    // ========================================================================
-    //                         EJECUCIÓN USUARIOS
-    // ========================================================================
+    private static String formatPlayerForList(UUID memberUuid, CommandSender viewer, PermaPiola plugin, LanguageManager lang) {
+        Player memberObj = Bukkit.getPlayer(memberUuid);
+        String playerName;
+        if (memberObj != null) {
+            playerName = memberObj.getName();
+        } else {
+            @SuppressWarnings("deprecation")
+            org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(memberUuid);
+            playerName = op.getName() != null ? op.getName() : lang.getMsg(viewer, "teams.memberlist.unknown-player");
+        }
+
+        String icon;
+        String finalPrefix;
+
+        if (pp.sheero.permapiola.hurricane.DeathStateManager.isDead(memberUuid)) {
+            icon = lang.getMsg(viewer, "teams.memberlist.icons.dead");
+            finalPrefix = (memberObj != null) ? LuckPermsUtils.getPrefix(memberObj) : LuckPermsUtils.getPrefixForOffline(playerName);
+        } else if (memberObj != null && memberObj.isOnline()) {
+            icon = lang.getMsg(viewer, "teams.memberlist.icons.online");
+            finalPrefix = LuckPermsUtils.getPrefix(memberObj);
+        } else {
+            icon = lang.getMsg(viewer, "teams.memberlist.icons.offline");
+            finalPrefix = LuckPermsUtils.getPrefixForOffline(playerName);
+        }
+
+        if (finalPrefix == null) finalPrefix = "";
+
+        return lang.getMsg(viewer, "teams.memberlist.player-format")
+                .replace("%status%", icon)
+                .replace("%player_prefix%", finalPrefix)
+                .replace("%player%", playerName);
+    }
 
     private static int executeHelp(CommandContext<CommandSourceStack> context, LanguageManager lang) {
         CommandSender sender = context.getSource().getSender();
@@ -254,7 +348,6 @@ public class TeamCommand {
 
         String rawName = context.getArgument("name", String.class);
         String cleanName = ColorUtils.stripColors(rawName);
-
         boolean isDonator = player.hasPermission("permapiola.donor");
 
         String restrictedPath = checkRestrictedColors(player, rawName);
@@ -273,6 +366,11 @@ public class TeamCommand {
             return Command.SINGLE_SUCCESS;
         }
 
+        if (cleanName.length() < 3) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.create.name-too-short"), lang);
+            return Command.SINGLE_SUCCESS;
+        }
+
         int maxLength = isDonator ? 16 : 8;
         if (cleanName.length() > maxLength) {
             sendFramedMessage(player, lang.getMsg(player, isDonator ? "teams.create.name-too-long" : "teams.create.name-too-long-default"), lang);
@@ -280,7 +378,6 @@ public class TeamCommand {
         }
 
         String internalName = cleanName.replace(" ", "").toLowerCase();
-
         if (TeamManager.isTeamNameTaken(internalName)) {
             sendFramedMessage(player, lang.getMsg(player, "teams.create.name-taken"), lang);
             return Command.SINGLE_SUCCESS;
@@ -290,6 +387,8 @@ public class TeamCommand {
         String generatedTag = "&8[&e" + rawTagStr + "&8]";
 
         PiolaTeam newTeam = TeamManager.createTeam(player, internalName, rawName, generatedTag);
+
+        TabManager.updatePlayerTab(player, plugin);
 
         sendFramedMessage(player, lang.getMsg(player, "teams.create.success").replace("%team%", newTeam.getDisplayName()), lang);
         return Command.SINGLE_SUCCESS;
@@ -331,8 +430,15 @@ public class TeamCommand {
 
         String formattedTag = "&8[" + newTag + "&8]";
         team.setTag(formattedTag);
-        team.broadcast(lang.getMsg(player, "teams.tag.success").replace("%tag%", formattedTag));
 
+        String successMsg = lang.getMsg(player, "teams.tag.success").replace("%tag%", formattedTag);
+        for (UUID memberUuid : team.getMembers()) {
+            Player member = Bukkit.getPlayer(memberUuid);
+            if (member != null && member.isOnline()) {
+                TabManager.updatePlayerTab(member, plugin);
+                sendFramedMessage(member, successMsg, lang);
+            }
+        }
         return Command.SINGLE_SUCCESS;
     }
 
@@ -358,6 +464,10 @@ public class TeamCommand {
             sendFramedMessage(player, lang.getMsg(player, "teams.create.invalid-chars"), lang);
             return Command.SINGLE_SUCCESS;
         }
+        if (cleanName.length() < 3) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.create.name-too-short"), lang);
+            return Command.SINGLE_SUCCESS;
+        }
 
         int maxLength = isDonator ? 16 : 8;
         if (cleanName.length() > maxLength) {
@@ -371,7 +481,15 @@ public class TeamCommand {
         }
 
         team.setDisplayName(newName);
-        team.broadcast(lang.getMsg(player, "teams.rename.success").replace("%name%", newName));
+
+        String successMsg = lang.getMsg(player, "teams.rename.success").replace("%name%", newName);
+        for (UUID memberUuid : team.getMembers()) {
+            Player member = Bukkit.getPlayer(memberUuid);
+            if (member != null && member.isOnline()) {
+                TabManager.updatePlayerTab(member, plugin);
+                sendFramedMessage(member, successMsg, lang);
+            }
+        }
         return Command.SINGLE_SUCCESS;
     }
 
@@ -383,35 +501,48 @@ public class TeamCommand {
         if (team == null) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
         if (!team.isLeader(player.getUniqueId())) { sendFramedMessage(player, lang.getMsg(player, "teams.not-leader"), lang); return Command.SINGLE_SUCCESS; }
 
-        try {
-            Player target = context.getArgument("target", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).get(0);
-            if (player.equals(target)) { sendFramedMessage(player, lang.getMsg(player, "teams.transfer.self"), lang); return Command.SINGLE_SUCCESS; }
-            if (!team.hasMember(target.getUniqueId())) { sendFramedMessage(player, lang.getMsg(player, "teams.transfer.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
+        String targetName = context.getArgument("target", String.class);
 
-            team.setLeader(target.getUniqueId());
-            team.broadcast(lang.getMsg(player, "teams.transfer.success").replace("%player%", target.getName()));
-
-        } catch (CommandSyntaxException e) {
-            sendFramedMessage(player, lang.getMsg(player, "commands.generic.player-offline"), lang);
-        }
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private static int executeLeave(CommandContext<CommandSourceStack> context, PermaPiola plugin, LanguageManager lang) {
-        Player player = getPlayerOrError(context);
-        if (player == null) return Command.SINGLE_SUCCESS;
-
-        PiolaTeam team = TeamManager.getTeam(player);
-        if (team == null) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
-
-        if (team.isLeader(player.getUniqueId())) {
-            team.broadcast(lang.getMsg(player, "teams.leave.disbanded"));
-        } else {
-            team.broadcast(lang.getMsg(player, "teams.leave.broadcast").replace("%player%", player.getName()));
-            sendFramedMessage(player, lang.getMsg(player, "teams.leave.success"), lang);
+        if (player.getName().equalsIgnoreCase(targetName)) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.transfer.self"), lang);
+            return Command.SINGLE_SUCCESS;
         }
 
-        TeamManager.removePlayerFromTeam(player);
+        UUID targetUuid = null;
+        String finalTargetName = targetName;
+
+        for (UUID memberId : team.getMembers()) {
+            Player p = Bukkit.getPlayer(memberId);
+            String mName = (p != null) ? p.getName() : Bukkit.getOfflinePlayer(memberId).getName();
+
+            if (mName != null && mName.equalsIgnoreCase(targetName)) {
+                targetUuid = memberId;
+                finalTargetName = mName;
+                break;
+            }
+        }
+
+        if (targetUuid == null) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.transfer.not-in-team"), lang);
+            return Command.SINGLE_SUCCESS;
+        }
+
+        team.setLeader(targetUuid);
+
+        Player onlineTarget = Bukkit.getPlayer(targetUuid);
+        String targetPrefix = onlineTarget != null ? LuckPermsUtils.getPrefix(onlineTarget) : LuckPermsUtils.getPrefixForOffline(finalTargetName);
+        if (targetPrefix == null) targetPrefix = "";
+
+        String formattedName = targetPrefix + finalTargetName;
+        String successMsg = lang.getMsg(player, "teams.transfer.success").replace("%player%", formattedName);
+
+        for (UUID memberUuid : team.getMembers()) {
+            Player member = Bukkit.getPlayer(memberUuid);
+            if (member != null && member.isOnline()) {
+                sendFramedMessage(member, successMsg, lang);
+            }
+        }
+
         return Command.SINGLE_SUCCESS;
     }
 
@@ -422,9 +553,17 @@ public class TeamCommand {
         PiolaTeam team = TeamManager.getTeam(player);
         if (team == null) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
 
+        String formattedLeader = "";
+        List<String> formattedMembers = new ArrayList<>();
+
+        for (UUID memberUuid : team.getMembers()) {
+            String pFormat = formatPlayerForList(memberUuid, player, plugin, lang);
+            if (memberUuid.equals(team.getLeader())) formattedLeader = pFormat;
+            else formattedMembers.add(pFormat);
+        }
+
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "commands.generic.line")));
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.team-name").replace("%team%", team.getDisplayName())));
-
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.tag").replace("%tag%", team.getTag())));
 
         String formattedPlaytime = TimeUtils.formatTime(team.getTotalPlaytime(),
@@ -434,25 +573,15 @@ public class TeamCommand {
                 lang.getMsg(player, "playtime.units.minute"),
                 lang.getMsg(player, "playtime.units.second"));
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.playtime").replace("%time%", formattedPlaytime)));
-
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.totems").replace("%totems%", String.valueOf(team.getTotalTotems()))));
 
-        Player leader = Bukkit.getPlayer(team.getLeader());
-        String leaderName = leader != null ? leader.getName() : lang.getMsg(player, "teams.memberlist.offline-player");
-        player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.leader").replace("%leader_info%", leaderName)));
+        player.sendMessage(" ");
+        player.sendMessage(ColorUtils.format(lang.getMsg(player, "teams.memberlist.leader").replace("%leader_info%", formattedLeader)));
 
-        List<String> memberNames = new ArrayList<>();
-        for (java.util.UUID uuid : team.getMembers()) {
-            if (!uuid.equals(team.getLeader())) {
-                Player m = Bukkit.getPlayer(uuid);
-                memberNames.add(m != null ? m.getName() : lang.getMsg(player, "teams.memberlist.unknown-player"));
-            }
-        }
-
-        if (!memberNames.isEmpty()) {
+        if (!formattedMembers.isEmpty()) {
             String memPrefix = lang.getMsg(player, "teams.memberlist.members-prefix");
             String separator = lang.getMsg(player, "teams.memberlist.members-separator");
-            player.sendMessage(ColorUtils.format(memPrefix + String.join(separator, memberNames)));
+            player.sendMessage(ColorUtils.format(memPrefix + String.join(separator, formattedMembers)));
         }
 
         player.sendMessage(ColorUtils.format(lang.getMsg(player, "commands.generic.line")));
@@ -463,17 +592,57 @@ public class TeamCommand {
         Player player = getPlayerOrError(context);
         if (player == null) return Command.SINGLE_SUCCESS;
 
-        PiolaTeam team = TeamManager.getTeam(player);
-        if (team == null) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
+        boolean inReTeam = ReTeamManager.hasReTeam(player);
+        if (!TeamManager.hasTeam(player) && !inReTeam) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang);
+            return Command.SINGLE_SUCCESS;
+        }
 
-        String coordsMsg = player.getLocation().getBlockX() + " " + player.getLocation().getBlockY() + " " + player.getLocation().getBlockZ();
-        String chatFormat = plugin.getConfig().getString("chat.team-format", "&8[&bTeamChat&8] %player_format%&f: %message%");
+        int x = player.getLocation().getBlockX();
+        int y = player.getLocation().getBlockY();
+        int z = player.getLocation().getBlockZ();
+
+        String rawWorldName = player.getWorld().getName();
+        String worldDisplay;
+
+        if (rawWorldName.equals("world_permapiola_fallen_memories")) {
+            worldDisplay = "Fallen Memories";
+        } else if (rawWorldName.endsWith("_nether")) {
+            worldDisplay = "Nether";
+        } else if (rawWorldName.endsWith("_the_end")) {
+            worldDisplay = "End";
+        } else {
+            worldDisplay = "Over";
+        }
+
+        String coordsMsg = x + " " + y + " " + z + " " + worldDisplay;
+        String chatFormat = plugin.getConfig().getString("chat.team-format", "&8[&bTeamChat&8] %player_prefix%%player%&f: %message%");
+
+        String playerPrefix = LuckPermsUtils.getPrefix(player);
+        if (playerPrefix == null) playerPrefix = "";
 
         String formattedMessage = ColorUtils.format(chatFormat
-                .replace("%player_format%", player.getName())
+                .replace("%player_prefix%", playerPrefix)
+                .replace("%player%", player.getName())
                 .replace("%message%", coordsMsg));
 
-        team.broadcast(formattedMessage);
+        if (inReTeam) {
+            PiolaReTeam reteam = ReTeamManager.getReTeam(player);
+            for (UUID memberUuid : reteam.getMembers()) {
+                Player member = Bukkit.getPlayer(memberUuid);
+                if (member != null && member.isOnline()) {
+                    member.sendMessage(formattedMessage);
+                }
+            }
+        } else {
+            PiolaTeam team = TeamManager.getTeam(player);
+            for (UUID memberUuid : team.getMembers()) {
+                Player member = Bukkit.getPlayer(memberUuid);
+                if (member != null && member.isOnline()) {
+                    member.sendMessage(formattedMessage);
+                }
+            }
+        }
         return Command.SINGLE_SUCCESS;
     }
 
@@ -484,47 +653,70 @@ public class TeamCommand {
         PiolaTeam inviterTeam = TeamManager.getTeam(player);
         if (inviterTeam == null) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
 
-        try {
-            Player target = context.getArgument("target", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).get(0);
+        String targetName = context.getArgument("target", String.class);
+        Player target = Bukkit.getPlayerExact(targetName);
 
-            if (target.equals(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.cant-invite-self"), lang); return Command.SINGLE_SUCCESS; }
-            if (inviterTeam.hasMember(target.getUniqueId())) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.already-in-your-team").replace("%target%", target.getName()), lang); return Command.SINGLE_SUCCESS; }
-            if (TeamManager.hasTeam(target)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.target-already-in-team"), lang); return Command.SINGLE_SUCCESS; }
-            if (TeamManager.hasInvite(player, target)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.already-invited"), lang); return Command.SINGLE_SUCCESS; }
-            if (inviterTeam.isFull()) { sendFramedMessage(player, lang.getMsg(player, "teams.team-full").replace("%size%", String.valueOf(inviterTeam.getMaxSize())), lang); return Command.SINGLE_SUCCESS; }
-
-            sendFramedMessage(player, lang.getMsg(player, "teams.invite.sent").replace("%target%", target.getName()), lang);
-
-            String lineStr = lang.getMsg(target, "commands.generic.line");
-            target.sendMessage(ColorUtils.format(lineStr));
-
-            String receivedMsg = lang.getMsg(target, "teams.invite.received").replace("%player%", player.getName());
-            Component hoverComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(lang.getMsg(target, "teams.invite.hover").replace("%player%", player.getName()).replace("\\n", "\n")));
-
-            String[] lines = receivedMsg.split("\\n");
-            for (int i = 0; i < lines.length; i++) {
-                Component textComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(lines[i]));
-                if (i == lines.length - 1) {
-                    textComp = textComp.clickEvent(ClickEvent.runCommand("/team accept " + player.getName()))
-                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(hoverComp));
-                }
-                target.sendMessage(textComp);
-            }
-            target.sendMessage(ColorUtils.format(lineStr));
-
-            int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (TeamManager.hasInvite(player, target)) {
-                    TeamManager.removeInvite(player, target);
-                    if (player.isOnline()) sendFramedMessage(player, lang.getMsg(player, "teams.invite.expired-sender").replace("%target%", target.getName()), lang);
-                    if (target.isOnline()) sendFramedMessage(target, lang.getMsg(target, "teams.invite.expired-target").replace("%player%", player.getName()), lang);
-                }
-            }, 1200L).getTaskId();
-
-            TeamManager.addInvite(player, target, taskId);
-
-        } catch (CommandSyntaxException e) {
+        if (target == null) {
             sendFramedMessage(player, lang.getMsg(player, "commands.generic.player-offline"), lang);
+            return Command.SINGLE_SUCCESS;
         }
+
+        if (target.equals(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.cant-invite-self"), lang); return Command.SINGLE_SUCCESS; }
+        if (inviterTeam.hasMember(target.getUniqueId())) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.already-in-your-team").replace("%target%", target.getName()), lang); return Command.SINGLE_SUCCESS; }
+        if (TeamManager.hasTeam(target)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.target-already-in-team"), lang); return Command.SINGLE_SUCCESS; }
+        if (TeamManager.hasInvite(player, target)) { sendFramedMessage(player, lang.getMsg(player, "teams.invite.already-invited"), lang); return Command.SINGLE_SUCCESS; }
+        if (inviterTeam.isFull()) { sendFramedMessage(player, lang.getMsg(player, "teams.team-full").replace("%size%", String.valueOf(inviterTeam.getMaxSize())), lang); return Command.SINGLE_SUCCESS; }
+
+        final String targetPrefix = LuckPermsUtils.getPrefix(target) != null ? LuckPermsUtils.getPrefix(target) : "";
+
+        sendFramedMessage(player, lang.getMsg(player, "teams.invite.sent")
+                .replace("%target_prefix%", targetPrefix)
+                .replace("%target%", target.getName()), lang);
+
+        final String playerPrefix = LuckPermsUtils.getPrefix(player) != null ? LuckPermsUtils.getPrefix(player) : "";
+
+        String lineStr = lang.getMsg(target, "commands.generic.line");
+        target.sendMessage(ColorUtils.format(lineStr));
+
+        String receivedMsg = lang.getMsg(target, "teams.invite.received")
+                .replace("%player_prefix%", playerPrefix)
+                .replace("%player%", player.getName());
+
+        String hoverRaw = lang.getMsg(target, "teams.invite.hover")
+                .replace("%player%", player.getName())
+                .replace("\\n", "\n");
+
+        Component hoverComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(hoverRaw));
+
+        String[] lines = receivedMsg.split("\\n");
+        for (int i = 0; i < lines.length; i++) {
+            Component textComp = LegacyComponentSerializer.legacySection().deserialize(ColorUtils.format(lines[i]));
+            if (i == lines.length - 1) {
+                textComp = textComp.clickEvent(ClickEvent.runCommand("/team accept " + player.getName()))
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(hoverComp));
+            }
+            target.sendMessage(textComp);
+        }
+        target.sendMessage(ColorUtils.format(lineStr));
+
+        int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (TeamManager.hasInvite(player, target)) {
+                TeamManager.removeInvite(player, target);
+                if (player.isOnline()) {
+                    sendFramedMessage(player, lang.getMsg(player, "teams.invite.expired-sender")
+                            .replace("%target_prefix%", targetPrefix)
+                            .replace("%target%", target.getName()), lang);
+                }
+                if (target.isOnline()) {
+                    sendFramedMessage(target, lang.getMsg(target, "teams.invite.expired-target")
+                            .replace("%player_prefix%", playerPrefix)
+                            .replace("%player%", player.getName()), lang);
+                }
+            }
+        }, 1200L).getTaskId();
+
+        TeamManager.addInvite(player, target, taskId);
+
         return Command.SINGLE_SUCCESS;
     }
 
@@ -534,29 +726,53 @@ public class TeamCommand {
 
         if (TeamManager.hasTeam(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.already-in-team"), lang); return Command.SINGLE_SUCCESS; }
 
-        try {
-            Player inviter = context.getArgument("target", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).get(0);
+        String targetName = context.getArgument("target", String.class);
+        Player inviter = Bukkit.getPlayerExact(targetName);
 
-            if (!TeamManager.hasInvite(inviter, player)) { sendFramedMessage(player, lang.getMsg(player, "teams.accept.no-invite"), lang); return Command.SINGLE_SUCCESS; }
-
-            PiolaTeam team = TeamManager.getTeam(inviter);
-            if (team == null) {
-                sendFramedMessage(player, lang.getMsg(player, "teams.accept.no-invite"), lang);
-                TeamManager.removeInvite(inviter, player);
-                return Command.SINGLE_SUCCESS;
-            }
-
-            if (team.isFull()) { sendFramedMessage(player, lang.getMsg(player, "teams.team-full").replace("%size%", String.valueOf(team.getMaxSize())), lang); return Command.SINGLE_SUCCESS; }
-
-            TeamManager.removeInvite(inviter, player);
-            TeamManager.addPlayerToTeam(player, team);
-
-            sendFramedMessage(player, lang.getMsg(player, "teams.accept.success").replace("%player%", inviter.getName()), lang);
-            team.broadcast(lang.getMsg(player, "teams.accept.broadcast").replace("%new_member%", player.getName()));
-
-        } catch (CommandSyntaxException e) {
+        if (inviter == null) {
             sendFramedMessage(player, lang.getMsg(player, "commands.generic.player-offline"), lang);
+            return Command.SINGLE_SUCCESS;
         }
+
+        if (!TeamManager.hasInvite(inviter, player)) { sendFramedMessage(player, lang.getMsg(player, "teams.accept.no-invite"), lang); return Command.SINGLE_SUCCESS; }
+
+        PiolaTeam team = TeamManager.getTeam(inviter);
+        if (team == null) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.accept.no-invite"), lang);
+            TeamManager.removeInvite(inviter, player);
+            return Command.SINGLE_SUCCESS;
+        }
+
+        if (team.isFull()) { sendFramedMessage(player, lang.getMsg(player, "teams.team-full").replace("%size%", String.valueOf(team.getMaxSize())), lang); return Command.SINGLE_SUCCESS; }
+
+        TeamManager.removeInvite(inviter, player);
+        TeamManager.addPlayerToTeam(player, team);
+
+        TabManager.updatePlayerTab(player, plugin);
+
+        String inviterPrefix = LuckPermsUtils.getPrefix(inviter);
+        if (inviterPrefix == null) inviterPrefix = "";
+
+        sendFramedMessage(player, lang.getMsg(player, "teams.accept.success")
+                .replace("%player_prefix%", inviterPrefix)
+                .replace("%player%", inviter.getName()), lang);
+
+        String playerPrefix = LuckPermsUtils.getPrefix(player);
+        if (playerPrefix == null) playerPrefix = "";
+
+        String broadcastMsg = lang.getMsg(player, "teams.accept.broadcast")
+                .replace("%new_member_prefix%", playerPrefix)
+                .replace("%new_member%", player.getName());
+
+        for (java.util.UUID memberUuid : team.getMembers()) {
+            if (!memberUuid.equals(player.getUniqueId())) {
+                Player member = Bukkit.getPlayer(memberUuid);
+                if (member != null && member.isOnline()) {
+                    sendFramedMessage(member, broadcastMsg, lang);
+                }
+            }
+        }
+
         return Command.SINGLE_SUCCESS;
     }
 
@@ -569,15 +785,24 @@ public class TeamCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        if (!TeamManager.hasTeam(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang); return Command.SINGLE_SUCCESS; }
+        if (!TeamManager.hasTeam(player) && !ReTeamManager.hasReTeam(player)) {
+            sendFramedMessage(player, lang.getMsg(player, "teams.not-in-team"), lang);
+            return Command.SINGLE_SUCCESS;
+        }
 
         if (state.equals("on")) {
             if (TeamManager.hasGlowEnabled(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.glow.already-on"), lang); return Command.SINGLE_SUCCESS; }
+
             TeamManager.toggleGlow(player);
+            GlowManager.updateGlowFor(player);
+
             sendFramedMessage(player, lang.getMsg(player, "teams.glow.toggled-on"), lang);
         } else {
             if (!TeamManager.hasGlowEnabled(player)) { sendFramedMessage(player, lang.getMsg(player, "teams.glow.already-off"), lang); return Command.SINGLE_SUCCESS; }
+
             TeamManager.toggleGlow(player);
+            GlowManager.updateGlowFor(player);
+
             sendFramedMessage(player, lang.getMsg(player, "teams.glow.toggled-off"), lang);
         }
         return Command.SINGLE_SUCCESS;
@@ -638,8 +863,18 @@ public class TeamCommand {
         PiolaTeam team = TeamManager.getTeamByName(teamName);
         if (team == null) { sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.team-not-found"), lang); return Command.SINGLE_SUCCESS; }
 
-        team.broadcast(lang.getMsg(sender, "teams.leave.disbanded"));
+        String disbandMsg = lang.getMsg(sender, "teams.leave.disbanded");
+        List<UUID> formerMembers = new ArrayList<>(team.getMembers());
+
         TeamManager.deleteTeamForcefully(team);
+
+        for (UUID memberUuid : formerMembers) {
+            Player member = Bukkit.getPlayer(memberUuid);
+            if (member != null && member.isOnline()) {
+                sendFramedMessage(member, disbandMsg, lang);
+                TabManager.updatePlayerTab(member, plugin);
+            }
+        }
 
         sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.delete-success").replace("%team%", team.getDisplayName()), lang);
         return Command.SINGLE_SUCCESS;
@@ -653,14 +888,42 @@ public class TeamCommand {
 
             Player target = context.getArgument("target", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).get(0);
 
+            String targetPrefix = LuckPermsUtils.getPrefix(target);
+            if (targetPrefix == null) targetPrefix = "";
+
             if (TeamManager.hasTeam(target)) {
-                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forcejoin-other-already-different").replace("%player%", target.getName()).replace("%current_team%", TeamManager.getTeam(target).getDisplayName()), lang);
+                PiolaTeam targetTeam = TeamManager.getTeam(target);
+                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forcejoin-other-already-different")
+                        .replace("%player_prefix%", targetPrefix)
+                        .replace("%player%", target.getName())
+                        .replace("%current_team%", targetTeam.getDisplayName()), lang);
                 return Command.SINGLE_SUCCESS;
             }
 
             TeamManager.addPlayerToTeam(target, team);
+            TabManager.updatePlayerTab(target, plugin);
+
             sendFramedMessage(target, lang.getMsg(target, "teams.staff.forcejoin-target").replace("%team%", team.getDisplayName()), lang);
-            team.broadcast(lang.getMsg(sender, "teams.staff.forcejoin-broadcast").replace("%player%", target.getName()));
+
+            String broadcastMsg = lang.getMsg(sender, "teams.staff.forcejoin-broadcast")
+                    .replace("%player_prefix%", targetPrefix)
+                    .replace("%player%", target.getName());
+
+            for (UUID memberUuid : team.getMembers()) {
+                if (!memberUuid.equals(target.getUniqueId())) {
+                    Player member = Bukkit.getPlayer(memberUuid);
+                    if (member != null && member.isOnline()) {
+                        sendFramedMessage(member, broadcastMsg, lang);
+                    }
+                }
+            }
+
+            if (!sender.equals(target)) {
+                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forcejoin-success")
+                        .replace("%player_prefix%", targetPrefix)
+                        .replace("%player%", target.getName())
+                        .replace("%team%", team.getDisplayName()), lang);
+            }
 
         } catch (CommandSyntaxException e) {
             sendFramedMessage(sender, lang.getMsg(sender, "commands.generic.player-offline"), lang);
@@ -674,20 +937,52 @@ public class TeamCommand {
             Player target = context.getArgument("target", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).get(0);
             PiolaTeam team = TeamManager.getTeam(target);
 
+            String targetPrefix = LuckPermsUtils.getPrefix(target);
+            if (targetPrefix == null) targetPrefix = "";
+
             if (team == null) {
-                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forceleave-other-no-team").replace("%player%", target.getName()), lang);
+                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forceleave-other-no-team")
+                        .replace("%player_prefix%", targetPrefix)
+                        .replace("%player%", target.getName()), lang);
                 return Command.SINGLE_SUCCESS;
             }
 
             if (team.isLeader(target.getUniqueId())) {
-                team.broadcast(lang.getMsg(sender, "teams.leave.disbanded"));
+                List<UUID> formerMembers = new ArrayList<>(team.getMembers());
+                TeamManager.deleteTeamForcefully(team);
+
+                for (UUID memberUuid : formerMembers) {
+                    Player member = Bukkit.getPlayer(memberUuid);
+                    if (member != null && member.isOnline()) {
+                        if (!memberUuid.equals(target.getUniqueId())) {
+                            sendFramedMessage(member, lang.getMsg(member, "teams.leave.disbanded"), lang);
+                        }
+                        TabManager.updatePlayerTab(member, plugin);
+                    }
+                }
             } else {
-                team.broadcast(lang.getMsg(sender, "teams.staff.forceleave-broadcast").replace("%player%", target.getName()));
+                for (UUID memberUuid : team.getMembers()) {
+                    if (!memberUuid.equals(target.getUniqueId())) {
+                        Player member = Bukkit.getPlayer(memberUuid);
+                        if (member != null && member.isOnline()) {
+                            String broadcastMsg = lang.getMsg(member, "teams.staff.forceleave-broadcast")
+                                    .replace("%player_prefix%", targetPrefix)
+                                    .replace("%player%", target.getName());
+                            sendFramedMessage(member, broadcastMsg, lang);
+                        }
+                    }
+                }
+                TeamManager.removePlayerFromTeam(target);
+                TabManager.updatePlayerTab(target, plugin);
             }
 
-            TeamManager.removePlayerFromTeam(target);
             sendFramedMessage(target, lang.getMsg(target, "teams.staff.forceleave-target"), lang);
-            sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forceleave-success").replace("%player%", target.getName()), lang);
+
+            if (!sender.equals(target)) {
+                sendFramedMessage(sender, lang.getMsg(sender, "teams.staff.forceleave-success")
+                        .replace("%player_prefix%", targetPrefix)
+                        .replace("%player%", target.getName()), lang);
+            }
 
         } catch (CommandSyntaxException e) {
             sendFramedMessage(sender, lang.getMsg(sender, "commands.generic.player-offline"), lang);
@@ -717,11 +1012,23 @@ public class TeamCommand {
 
         int index = startIndex + 1;
         for (PiolaTeam t : pageTeams) {
-            Player leader = Bukkit.getPlayer(t.getLeader());
-            String leaderName = leader != null ? leader.getName() : lang.getMsg(sender, "teams.memberlist.unknown-player");
+            String formattedLeader = "";
+            List<String> formattedMembers = new ArrayList<>();
+
+            for (UUID memberUuid : t.getMembers()) {
+                String pFormat = formatPlayerForList(memberUuid, sender, plugin, lang);
+                if (memberUuid.equals(t.getLeader())) formattedLeader = pFormat;
+                else formattedMembers.add(pFormat);
+            }
 
             sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "teams.staff.lists-team-format").replace("%index%", String.valueOf(index)).replace("%team_name%", t.getDisplayName())));
-            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "teams.staff.lists-leader").replace("%leader%", leaderName)));
+            sender.sendMessage(ColorUtils.format(lang.getMsg(sender, "teams.staff.lists-leader").replace("%leader%", formattedLeader)));
+
+            if (!formattedMembers.isEmpty()) {
+                String memPrefix = lang.getMsg(sender, "teams.staff.lists-members-prefix");
+                String separator = lang.getMsg(sender, "teams.staff.lists-separator");
+                sender.sendMessage(ColorUtils.format(memPrefix + String.join(separator, formattedMembers)));
+            }
             index++;
         }
 

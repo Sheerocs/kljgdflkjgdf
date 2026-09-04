@@ -33,7 +33,7 @@ public class TotemManager {
             dataFolder.mkdirs();
         }
 
-        this.dataFile = new File(dataFolder, "totem_data.yml");
+        this.dataFile = new File(dataFolder, "totem.yml");
         loadData();
         startAutoSave();
     }
@@ -46,23 +46,24 @@ public class TotemManager {
 
         if (dataConfig.contains("players")) {
             for (String uuidStr : dataConfig.getConfigurationSection("players").getKeys(false)) {
-                TotemProfile profile = new TotemProfile();
-                String basePath = "players." + uuidStr;
-
-                profile.count = dataConfig.getInt(basePath + ".count", 0);
-                profile.soundMode = dataConfig.getString(basePath + ".mode", "ALL");
-                profile.soundType = dataConfig.getString(basePath + ".type", "ITEM_TOTEM_USE");
-
-                String savedName = dataConfig.getString(basePath + ".name", "Desconocido");
-
-                if (savedName.equals("Desconocido")) {
-                    org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(uuidStr));
-                    if (op.getName() != null) savedName = op.getName();
-                }
-                profile.name = savedName;
-
                 try {
-                    cache.put(UUID.fromString(uuidStr), profile);
+                    UUID uuid = UUID.fromString(uuidStr);
+                    TotemProfile profile = new TotemProfile();
+                    String basePath = "players." + uuidStr;
+
+                    profile.count = dataConfig.getInt(basePath + ".count", 0);
+                    profile.soundMode = dataConfig.getString(basePath + ".mode", "ALL");
+                    profile.soundType = dataConfig.getString(basePath + ".type", "ITEM_TOTEM_USE");
+
+                    String savedName = dataConfig.getString(basePath + ".name", "Desconocido");
+
+                    if (savedName.equals("Desconocido")) {
+                        org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+                        if (op.getName() != null) savedName = op.getName();
+                    }
+                    profile.name = savedName;
+
+                    cache.put(uuid, profile);
                 } catch (IllegalArgumentException ignored) {}
             }
         }

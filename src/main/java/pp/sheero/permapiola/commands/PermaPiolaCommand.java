@@ -102,5 +102,6 @@ public class PermaPiolaCommand {
         if (plugin.getTotemListener() != null) plugin.getTotemListener().loadConfigCache();
         if (plugin.getDiscordManager() != null) plugin.getDiscordManager().loadConfigCache();
         if (plugin.getChatManager() != null) plugin.getChatManager().loadConfigCache();
+        if (plugin.getInactivityManager() != null) plugin.getInactivityManager().loadConfigCache();
     }
 }

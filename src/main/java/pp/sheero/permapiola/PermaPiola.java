@@ -21,6 +21,7 @@ import pp.sheero.permapiola.dementialwheel.DementialWheelTask;
 import pp.sheero.permapiola.discord.DiscordManager;
 import pp.sheero.permapiola.hurricane.*;
 import pp.sheero.permapiola.inactivity.AFKManager;
+import pp.sheero.permapiola.inactivity.InactivityCommand;
 import pp.sheero.permapiola.inactivity.InactivityManager;
 import pp.sheero.permapiola.inventory.*;
 import pp.sheero.permapiola.moderation.CombatLogListener;
@@ -82,15 +83,13 @@ public final class PermaPiola extends JavaPlugin {
         this.dementialWheelManager.loadData();
         this.inactivityManager = new InactivityManager(this);
         LuckPermsUtils.registerListeners(this);
+        new pp.sheero.permapiola.utils.LuckPermsUpdateListener(this).register();
 
         // 2. Registro de Listeners
         getLogger().info("Loading listeners...");
         registerListeners();
 
         TeamManager.loadConfigCache(this);
-
-        // 3. Registro de Comandos (Antiguos Bukkit)
-        getLogger().info("Loading commands...");
 
         // 3.5 Registro de Comandos Modernos (Brigadier)
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
@@ -99,13 +98,15 @@ public final class PermaPiola extends JavaPlugin {
             GmcCommand.register(event.registrar(), languageManager);
             GmsCommand.register(event.registrar(), languageManager);
             GmspCommand.register(event.registrar(), languageManager);
-            MsgCommand.register(event.registrar(), languageManager, emoteManager);
-            ReplyCommand.register(event.registrar(), languageManager, emoteManager);
+            MsgCommand.register(event.registrar(), this, languageManager, emoteManager);
+            ReplyCommand.register(event.registrar(), this, languageManager, emoteManager);
+            SpectatorChatCommand.register(event.registrar(), this, chatManager, languageManager, emoteManager);
+            HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
             ChatCommand.register(event.registrar(), chatManager, languageManager);
             StaffChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
             TeamChatCommand.register(event.registrar(), languageManager);
             TeamCommand.register(event.registrar(), this, languageManager);
-            HelpOpCommand.register(event.registrar(), this, languageManager, emoteManager);
+            ReTeamCommand.register(event.registrar(), this, languageManager);
             BroadcastCommand.register(event.registrar(), languageManager, emoteManager);
             PermaPiolaCommand.register(event.registrar(), this, languageManager, emoteManager);
             EmotesCommand.register(event.registrar(), emoteManager, languageManager);
@@ -118,9 +119,9 @@ public final class PermaPiola extends JavaPlugin {
             DeathMessageCommand.register(event.registrar(), this, languageManager);
             DementialWheelCommand.register(event.registrar(), dementialWheelManager, languageManager);
             HurricaneCommand.register(event.registrar(), hurricaneManager, languageManager);
-            SpectatorChatCommand.register(event.registrar(), chatManager, languageManager, emoteManager);
             TotemCommand.register(event.registrar(), totemManager, languageManager);
             PlaytimeCommand.register(event.registrar(), playtimeManager, languageManager);
+            InactivityCommand.register(event.registrar(), inactivityManager, this, languageManager);
         });
 
         // 4. Tareas, Dependencias (ProtocolLib) y Carga de Datos Estáticos
@@ -133,15 +134,17 @@ public final class PermaPiola extends JavaPlugin {
         }
 
         TeamManager.loadData(this);
+        ReTeamManager.loadConfigCache(this);
         DeathStateManager.loadData(this);
         DeathInventoryManager.init(this);
+        TabManager.registerTabPlaceholder(this);
+        TabManager.updateAllTabs(this);
 
         getLogger().info("Successfully enabled.");
     }
 
     @Override
     public void onDisable() {
-        // Guardado de Datos
         if (playtimeManager != null) playtimeManager.saveData();
         if (totemManager != null) totemManager.saveData();
         if (chatManager != null) chatManager.saveData();
@@ -155,24 +158,15 @@ public final class PermaPiola extends JavaPlugin {
         DeathInventoryManager.saveDataSync();
     }
 
-    // ==========================================================
-    // MÉTODOS DE REGISTRO
-    // ==========================================================
-
     private void registerListeners() {
         PluginManager pm = Bukkit.getPluginManager();
-
-        // Instanciar Listeners Cacheados
         this.totemListener = new TotemListener(this, totemManager, languageManager);
 
-        // Listeners Base y Módulos
         pm.registerEvents(this.afkManager, this);
         pm.registerEvents(this.scoreboardManager, this);
         pm.registerEvents(this.totemListener, this);
         pm.registerEvents(this.hurricaneManager, this);
         pm.registerEvents(new pp.sheero.permapiola.hurricane.HurricaneDeathListener(this, languageManager), this);
-
-        // Listeners de Utilidad
         pm.registerEvents(new ChatListener(this, chatManager, languageManager, emoteManager), this);
         pm.registerEvents(new CombatLogListener(this, languageManager), this);
         pm.registerEvents(new PlayerDeathListener(), this);
@@ -186,18 +180,11 @@ public final class PermaPiola extends JavaPlugin {
         pm.registerEvents(new DeathInventoryEditListener(languageManager), this);
         pm.registerEvents(this.inactivityManager, this);
 
-        // Demential Wheel
         pm.registerEvents(new DementialWheelListener(this), this);
         Bukkit.getScheduler().runTaskTimer(this, new DementialWheelTask(this), 10L, 10L);
     }
 
-    // ==========================================================
-    // GETTERS DE INSTANCIAS
-    // ==========================================================
-
-    public static PermaPiola getInstance() {
-        return instance;
-    }
+    public static PermaPiola getInstance() { return instance; }
 
     public LanguageManager getLanguageManager() { return languageManager; }
     public DayManager getDayManager() { return dayManager; }
@@ -212,6 +199,5 @@ public final class PermaPiola extends JavaPlugin {
     public PlaytimeManager getPlaytimeManager() { return playtimeManager; }
     public TotemManager getTotemManager() { return totemManager; }
     public InactivityManager getInactivityManager() { return inactivityManager; }
-
     public TotemListener getTotemListener() { return totemListener; }
 }

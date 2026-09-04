@@ -26,7 +26,7 @@ public class PlaytimeManager {
             dataFolder.mkdirs();
         }
 
-        this.dataFile = new File(dataFolder, "playtime_data.yml");
+        this.dataFile = new File(dataFolder, "playtime.yml");
         loadData();
         startAutoSave();
     }
@@ -35,32 +35,23 @@ public class PlaytimeManager {
         if (!dataFile.exists()) {
             try { dataFile.createNewFile(); } catch (IOException e) { e.printStackTrace(); }
         }
-        org.bukkit.configuration.file.YamlConfiguration dataConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(dataFile);
+        YamlConfiguration dataConfig = YamlConfiguration.loadConfiguration(dataFile);
 
-        String rootKey = dataConfig.contains("players") ? "players" : (dataConfig.contains("playtime") ? "playtime" : null);
-
-        if (rootKey != null) {
-            for (String uuidStr : dataConfig.getConfigurationSection(rootKey).getKeys(false)) {
+        if (dataConfig.contains("players")) {
+            for (String uuidStr : dataConfig.getConfigurationSection("players").getKeys(false)) {
                 try {
                     UUID uuid = UUID.fromString(uuidStr);
-                    String basePath = rootKey + "." + uuidStr;
+                    String basePath = "players." + uuidStr;
 
-                    if (dataConfig.isLong(basePath) || dataConfig.isInt(basePath)) {
-                        playtimeCache.put(uuid, dataConfig.getLong(basePath));
+                    playtimeCache.put(uuid, dataConfig.getLong(basePath + ".time"));
+                    String savedName = dataConfig.getString(basePath + ".name", "Desconocido");
 
+                    if (savedName.equals("Desconocido")) {
                         org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
-                        nameCache.put(uuid, op.getName() != null ? op.getName() : "Desconocido");
+                        if (op.getName() != null) savedName = op.getName();
                     }
-                    else if (dataConfig.isConfigurationSection(basePath)) {
-                        playtimeCache.put(uuid, dataConfig.getLong(basePath + ".time"));
-                        String savedName = dataConfig.getString(basePath + ".name", "Desconocido");
+                    nameCache.put(uuid, savedName);
 
-                        if (savedName.equals("Desconocido")) {
-                            org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
-                            if (op.getName() != null) savedName = op.getName();
-                        }
-                        nameCache.put(uuid, savedName);
-                    }
                 } catch (IllegalArgumentException ignored) {}
             }
         }

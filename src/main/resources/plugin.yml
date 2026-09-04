@@ -5,7 +5,7 @@ version: '${version}'
 main: pp.sheero.permapiola.PermaPiola
 api-version: '1.21.11'
 load: STARTUP
-softdepend: [DiscordSRV, ProtocolLib]
+softdepend: [DiscordSRV, ProtocolLib, TAB]
 
 authors: [ Sheero ]
 
@@ -109,4 +109,6 @@ permissions:
   permapiola.donor.emotes:
     description: Permite usar emotes en el chat y abrirlos en el menú.
   permapiola.donor.totem:
-    description: Permite elegir sonidos especiales (premium) de muerte de tótem.
+    description: Permite elegir sonidos especiales (premium) de muerte de tótem
+  permapiola.admin.inactivity:
+    description: Permite revisar logs y restaurar baneos de inactividad.

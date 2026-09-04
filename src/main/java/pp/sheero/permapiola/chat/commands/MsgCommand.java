@@ -11,23 +11,22 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import pp.sheero.permapiola.PermaPiola;
+import pp.sheero.permapiola.chat.ChatListener;
 import pp.sheero.permapiola.chat.EmoteManager;
 import pp.sheero.permapiola.core.LanguageManager;
 import pp.sheero.permapiola.hurricane.DeathStateManager;
 import pp.sheero.permapiola.utils.ColorUtils;
-import pp.sheero.permapiola.utils.LuckPermsUtils;
 import pp.sheero.permapiola.chat.ReplyManager;
 
 import java.util.List;
 
 public class MsgCommand {
 
-    public static void register(Commands commands, LanguageManager lang, EmoteManager emoteManager) {
+    public static void register(Commands commands, PermaPiola plugin, LanguageManager lang, EmoteManager emoteManager) {
 
         var msgNode = Commands.literal("msg")
-
                 .then(Commands.argument("targets", ArgumentTypes.players())
-
                         .then(Commands.argument("message", StringArgumentType.greedyString())
                                 .executes(context -> {
                                     CommandSender sender = context.getSource().getSender();
@@ -69,21 +68,21 @@ public class MsgCommand {
 
                                         for (Player target : targets) {
 
-                                            String targetPrefix = LuckPermsUtils.getPrefix(target) != null ? LuckPermsUtils.getPrefix(target) : "";
-                                            String targetSuffix = LuckPermsUtils.getSuffix(target) != null ? LuckPermsUtils.getSuffix(target) : "";
-                                            String senderPrefix = LuckPermsUtils.getPrefix(pSender) != null ? LuckPermsUtils.getPrefix(pSender) : "";
-                                            String senderSuffix = LuckPermsUtils.getSuffix(pSender) != null ? LuckPermsUtils.getSuffix(pSender) : "";
+                                            String targetTag = ChatListener.getPlayerTag(target);
+                                            String targetColor = ChatListener.getPlayerNameColor(target, plugin);
+                                            String senderTag = ChatListener.getPlayerTag(pSender);
+                                            String senderColor = ChatListener.getPlayerNameColor(pSender, plugin);
 
                                             String toTemplate = rawFormatTo
-                                                    .replace("%target_prefix%", targetPrefix)
-                                                    .replace("%target_suffix%", targetSuffix)
-                                                    .replace("%target%", target.getName());
+                                                    .replace("%target_prefix%", targetTag)
+                                                    .replace("%target_suffix%", "")
+                                                    .replace("%target%", targetColor + target.getName());
 
                                             String rawFormatFrom = lang.getMsg(target, formatFromPath);
                                             String fromTemplate = rawFormatFrom
-                                                    .replace("%sender_prefix%", senderPrefix)
-                                                    .replace("%sender_suffix%", senderSuffix)
-                                                    .replace("%sender%", pSender.getName());
+                                                    .replace("%sender_prefix%", senderTag)
+                                                    .replace("%sender_suffix%", "")
+                                                    .replace("%sender%", senderColor + pSender.getName());
 
                                             String coloredToTemplate = ColorUtils.format(toTemplate);
                                             String coloredFromTemplate = ColorUtils.format(fromTemplate);

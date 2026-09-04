@@ -70,6 +70,11 @@
             <id>scarsz-repo</id>
             <url>https://nexus.scarsz.me/content/groups/public/</url>
         </repository>
+
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -99,6 +104,13 @@
             <groupId>com.discordsrv</groupId>
             <artifactId>discordsrv</artifactId>
             <version>1.28.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.NEZNAMY</groupId>
+            <artifactId>TAB-API</artifactId>
+            <version>6.1.2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
